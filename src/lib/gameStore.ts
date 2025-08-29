@@ -8,7 +8,7 @@ export interface GameState {
 
 const initialState: GameState = {
   players: [],
-  darkMode: false
+  darkMode: true
 };
 
 export const gameStore = writable<GameState>(initialState);
@@ -61,7 +61,7 @@ export function resetGame() {
   gameStore.set({
     ...initialState,
     players: [],
-    darkMode: false
+    darkMode: true
   });
 }
 

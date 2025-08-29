@@ -1,9 +1,120 @@
 @import 'tailwindcss';
 
-html {
-  background-color: theme(--color-gray-100);
+/* App theme variables for light and dark modes */
+:root {
+  --bg: #0b1220;
+  /* near black-blue */
+  --card: #0f1724;
+  /* dark card */
+  --muted: #9ca3af;
+  /* gray-400 */
+  --text: #eef2ff;
+  /* near white */
+  --primary: #8b5cf6;
+  /* indigo-400 */
+  --accent: #2dd4bf;
+  /* teal-400 */
+  /* table/border colors (stronger in dark mode) */
+  --table-border: rgba(255, 255, 255, 0.10);
+  --table-border-soft: rgba(255, 255, 255, 0.06);
 }
 
 .dark {
-  background-color: theme(--color-gray-900);
+  --bg: #f8fafc;
+  /* gray-50 */
+  --card: #ffffff;
+  /* white */
+  --muted: #6b7280;
+  /* gray-500 */
+  --text: #0f172a;
+  /* gray-900 */
+  --primary: #6366f1;
+  /* indigo-500 */
+  --accent: #06b6d4;
+  /* cyan-500 */
+  /* table/border colors for light mode (original values) */
+  --table-border: rgba(15, 23, 42, 0.06);
+  --table-border-soft: rgba(15, 23, 42, 0.04);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reusable card + glass classes */
+.card {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08);
+  border-radius: 12px;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.5));
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* Modal tweaks */
+.modal-card {
+  background: var(--card);
+  color: var(--text);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(2, 6, 23, 0.35);
+}
+
+/* Utility: subtle primary button */
+.btn-primary {
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, black 10%));
+  color: white;
+}
+
+/* Ensure focus outlines are visible for accessibility */
+*:focus {
+  outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent 65%);
+  outline-offset: 2px;
+}
+
+/* Small utilities used in components */
+.text-muted {
+  color: var(--muted);
+}
+
+.text-foreground {
+  color: var(--text);
+}
+
+.rounded-md {
+  border-radius: 8px;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Keep Tailwind helper classes visually consistent with theme variables */
+.bg-white {
+  background: var(--card) !important;
+}
+
+.bg-gray-50 {
+  background: color-mix(in srgb, var(--card) 92%, black 8%) !important;
+}
+
+.dark .bg-white {
+  background: var(--card) !important;
+}
+
+.dark .bg-gray-50 {
+  background: rgba(255, 255, 255, 0.02) !important;
 }
