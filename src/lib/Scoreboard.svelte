@@ -141,7 +141,6 @@
 			<div class="mb-6 rounded-lg bg-white p-6 dark:bg-gray-800">
 				<h2 class="mb-4 text-xl font-semibold">Add Players</h2>
 				<div class="mb-4 flex space-x-4">
-					<span class="font-medium">Upper Total</span>
 					<input
 						type="text"
 						bind:value={playersInput}
