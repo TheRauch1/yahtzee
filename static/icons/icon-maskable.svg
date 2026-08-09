@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Yahtzee">
+	<!-- Maskable variant: artwork is kept inside the inner 80% safe zone so
+	     Android can crop it to any shape without clipping the die. -->
+	<rect width="512" height="512" fill="#0b1220" />
+	<rect
+		x="146"
+		y="146"
+		width="220"
+		height="220"
+		rx="38"
+		fill="#eef2ff"
+		stroke="#2dd4bf"
+		stroke-width="10"
+	/>
+	<circle cx="201" cy="201" r="20" fill="#0f1724" />
+	<circle cx="311" cy="201" r="20" fill="#0f1724" />
+	<circle cx="256" cy="256" r="20" fill="#0f1724" />
+	<circle cx="201" cy="311" r="20" fill="#0f1724" />
+	<circle cx="311" cy="311" r="20" fill="#0f1724" />
+</svg>

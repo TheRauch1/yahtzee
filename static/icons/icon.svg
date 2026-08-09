@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Yahtzee">
+	<rect width="512" height="512" rx="96" fill="#0b1220" />
+	<rect
+		x="116"
+		y="116"
+		width="280"
+		height="280"
+		rx="48"
+		fill="#eef2ff"
+		stroke="#2dd4bf"
+		stroke-width="12"
+	/>
+	<circle cx="186" cy="186" r="26" fill="#0f1724" />
+	<circle cx="326" cy="186" r="26" fill="#0f1724" />
+	<circle cx="256" cy="256" r="26" fill="#0f1724" />
+	<circle cx="186" cy="326" r="26" fill="#0f1724" />
+	<circle cx="326" cy="326" r="26" fill="#0f1724" />
+</svg>

@@ -2,7 +2,30 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="description" content="A local-first Yahtzee scorekeeper that works offline." />
+
+		<link rel="icon" href="%sveltekit.assets%/icons/icon.svg" type="image/svg+xml" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<meta name="theme-color" content="#0b1220" />
+
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Yahtzee" />
+
+		<script>
+			// Apply the saved theme before first paint so the page never flashes the
+			// wrong palette. Dark is the default when nothing is stored.
+			try {
+				if (localStorage.getItem('yahtzee:theme') !== 'light') {
+					document.documentElement.classList.add('dark');
+				}
+			} catch {
+				document.documentElement.classList.add('dark');
+			}
+		</script>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
