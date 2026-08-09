@@ -1,113 +1,70 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import DiceFace from './DiceFace.svelte';
+	import AddPlayerForm from './AddPlayerForm.svelte';
 	import ScoreModal from './ScoreModal.svelte';
-	import { gameStore, addPlayer, scoreCategory, resetGame, toggleDarkMode } from './gameStore';
-	import type { ScoringCategory } from './types';
-	import { CATEGORY_NAMES, UPPER_CATEGORIES, LOWER_CATEGORIES } from './types';
+	import { game } from './gameStore.svelte';
+	import { theme } from './theme.svelte';
+	import type { Player, ScoringCategory } from './types';
+	import { CATEGORY_NAMES, LOWER_CATEGORIES, UPPER_CATEGORIES } from './types';
+	import { UPPER_BONUS_THRESHOLD, grandTotal, lowerTotal, upperBonus, upperTotal } from './scoring';
 
-	let playersInput = $state('');
-	let modalOpen = $state(false);
-	let selectedCategory: ScoringCategory | null = $state(null);
-	let selectedPlayerId: string | null = $state(null);
+	let selectedCategory = $state<ScoringCategory | null>(null);
+	let selectedPlayerId = $state<string | null>(null);
 
-	let gameState = $derived($gameStore);
-
-	function handleAddPlayer() {
-		if (playersInput.trim()) {
-			console.log('Adding player:', playersInput.trim());
-			addPlayer(playersInput.trim());
-			playersInput = '';
-			console.log('Player added, current gameState:', gameState);
-		}
-	}
-
-	function handleScore(category: ScoringCategory, playerId: string) {
-		console.log('Opening modal for:', category, playerId);
-		console.log('Current state - modalOpen:', modalOpen, 'selectedCategory:', selectedCategory);
+	function openScoreModal(category: ScoringCategory, playerId: string) {
 		selectedCategory = category;
 		selectedPlayerId = playerId;
-		modalOpen = true;
-		console.log('After setting - modalOpen:', modalOpen, 'selectedCategory:', selectedCategory);
 	}
 
-	function handleModalScore(event: { category: ScoringCategory; score: number }) {
-		console.log('handleModalScore called with:', event);
-		if (selectedPlayerId) {
-			scoreCategory(event.category, event.score, selectedPlayerId);
-		}
-		modalOpen = false;
+	function closeScoreModal() {
 		selectedCategory = null;
 		selectedPlayerId = null;
 	}
 
-	function handleModalClose() {
-		console.log('handleModalClose called');
-		modalOpen = false;
-		selectedCategory = null;
-		selectedPlayerId = null;
-	}
-
-	function getTotalScore(player: any): number {
-		let total = 0;
-		Object.values(player.scores).forEach((score: any) => {
-			if (score !== null && typeof score === 'number' && !isNaN(score)) {
-				total += score;
-			}
-		});
-		// Add bonus if upper total is 65 or more
-		total += getUpperBonus(player);
-		return total;
-	}
-
-	function getUpperTotal(player: any): number {
-		let total = 0;
-		UPPER_CATEGORIES.forEach((cat) => {
-			const score = player.scores[cat];
-			if (score !== null && typeof score === 'number' && !isNaN(score)) {
-				total += score;
-			}
-		});
-		return total;
-	}
-
-	function getUpperBonus(player: any): number {
-		const upperTotal = getUpperTotal(player);
-		return upperTotal >= 65 ? 35 : 0;
-	}
-
-	function getLowerTotal(player: any): number {
-		let total = 0;
-		LOWER_CATEGORIES.forEach((cat) => {
-			const score = player.scores[cat];
-			if (score !== null && typeof score === 'number' && !isNaN(score)) {
-				total += score;
-			}
-		});
-		return total;
-	}
-
-	onMount(() => {
-		// Initialize dark mode from localStorage or default to dark mode
-		const savedDarkMode = localStorage.getItem('darkMode');
-		if (savedDarkMode !== null) {
-			if (savedDarkMode === 'false') {
-				document.documentElement.classList.add('dark');
-			}
+	function applyScore(score: number) {
+		if (selectedCategory && selectedPlayerId) {
+			game.scoreCategory(selectedCategory, score, selectedPlayerId);
 		}
-		// If no saved preference, default to dark mode (no class needed)
-	});
-
-	$effect(() => {
-		if (!gameState.darkMode && typeof document !== 'undefined') {
-			document.documentElement.classList.add('dark');
-			localStorage.setItem('darkMode', 'false');
-		} else if (typeof document !== 'undefined') {
-			document.documentElement.classList.remove('dark');
-			localStorage.setItem('darkMode', 'true');
-		}
-	});
+		closeScoreModal();
+	}
 </script>
+
+{#snippet categoryRow(category: ScoringCategory)}
+	<tr class="border-b border-[var(--table-border-soft)]">
+		<td
+			class="border-r border-[var(--table-border)] bg-[var(--row-header)] px-4 py-3 font-semibold"
+		>
+			{CATEGORY_NAMES[category]}
+		</td>
+		{#each game.players as player (player.id)}
+			<td
+				class="border-r border-[var(--table-border)] bg-[var(--card)] p-0 text-center last:border-r-0"
+			>
+				<button
+					class="min-h-[48px] w-full cursor-pointer px-4 py-3 transition-colors duration-200 hover:bg-[var(--hover)]"
+					aria-label={`Score ${CATEGORY_NAMES[category]} for ${player.name}`}
+					onclick={() => openScoreModal(category, player.id)}
+				>
+					{#if player.scores[category] !== null}
+						<span class="text-foreground font-medium">{player.scores[category]}</span>
+					{:else}
+						<span class="text-sm font-medium" style="color: var(--accent);">Click to score</span>
+					{/if}
+				</button>
+			</td>
+		{/each}
+	</tr>
+{/snippet}
+
+{#snippet totalRow(label: string, value: (player: Player) => number)}
+	<tr class="border border-[var(--table-border)]">
+		<td class="px-4 py-3 font-bold">{label}</td>
+		{#each game.players as player (player.id)}
+			<td class="border border-[var(--table-border)] px-4 py-3 text-center font-bold">
+				{value(player)}
+			</td>
+		{/each}
+	</tr>
+{/snippet}
 
 <div class="min-h-screen p-6">
 	<div class="mx-auto max-w-6xl">
@@ -122,60 +79,40 @@
 			</div>
 			<div class="flex items-center space-x-3">
 				<button
-					class="btn-primary rounded-md border px-4 py-2"
-					onclick={toggleDarkMode}
-					aria-pressed={gameState.darkMode}
+					class="btn-primary rounded-md border border-transparent px-4 py-2"
+					onclick={() => theme.toggle()}
+					aria-pressed={theme.isDark}
 				>
-					{gameState.darkMode ? 'Light Mode' : 'Dark Mode'}
+					{theme.isDark ? 'Light Mode' : 'Dark Mode'}
 				</button>
 				<button
 					class="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-					onclick={resetGame}
+					onclick={() => game.reset()}
 				>
 					Reset
 				</button>
 			</div>
 		</header>
 
-		{#if gameState.players.length === 0}
-			<div class="mb-6 rounded-lg bg-white p-6 dark:bg-gray-800">
-				<h2 class="mb-4 text-xl font-semibold">Add Players</h2>
-				<div class="mb-4 flex space-x-4">
-					<input
-						type="text"
-						bind:value={playersInput}
-						placeholder="Player name"
-						class="flex-1 rounded border bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-						onkeydown={(e) => e.key === 'Enter' && handleAddPlayer()}
-					/>
-					<button
-						class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-						onclick={handleAddPlayer}
-					>
-						Add Player
-					</button>
-				</div>
-			</div>
-		{/if}
-
-		{#if gameState.players.length > 0}
-			{console.log('Rendering scoreboard for players:', gameState.players)}
+		{#if game.players.length === 0}
 			<div class="card mb-6 p-6">
-				<div class="mb-4 flex items-center justify-between">
+				<h2 class="mb-4 text-xl font-semibold">Add Players</h2>
+				<AddPlayerForm onadd={(name) => game.addPlayer(name)} />
+			</div>
+		{:else}
+			<div class="card mb-6 p-6">
+				<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
 					<h2 class="text-xl font-semibold">Yahtzee Scoreboard</h2>
-					<div class="flex space-x-2">
-						{#each gameState.players as player}
+					<div class="flex flex-wrap gap-2">
+						{#each game.players as player (player.id)}
 							<div
-								class="flex items-center space-x-2 rounded bg-blue-50 px-3 py-1 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+								class="flex items-center space-x-2 rounded bg-blue-500/15 px-3 py-1 text-blue-500"
 							>
 								<span class="font-medium">{player.name}</span>
 								<button
-									class="ml-2 text-xs text-red-600 hover:text-red-800"
-									onclick={() =>
-										gameStore.update((state) => ({
-											...state,
-											players: state.players.filter((p) => p.id !== player.id)
-										}))}
+									class="ml-2 text-xs text-red-500 hover:text-red-400"
+									aria-label={`Remove ${player.name}`}
+									onclick={() => game.removePlayer(player.id)}
 								>
 									×
 								</button>
@@ -184,24 +121,9 @@
 					</div>
 				</div>
 
-				<!-- Add more players section -->
-				<div class="border-t pt-4">
+				<div class="border-t border-[var(--table-border)] pt-4">
 					<h3 class="mb-2 text-lg font-semibold">Add More Players</h3>
-					<div class="flex space-x-4">
-						<input
-							type="text"
-							bind:value={playersInput}
-							placeholder="Player name"
-							class="flex-1 rounded border bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-							onkeydown={(e) => e.key === 'Enter' && handleAddPlayer()}
-						/>
-						<button
-							class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-							onclick={handleAddPlayer}
-						>
-							Add Player
-						</button>
-					</div>
+					<AddPlayerForm onadd={(name) => game.addPlayer(name)} />
 				</div>
 			</div>
 
@@ -209,75 +131,34 @@
 				<table class="w-full border-collapse">
 					<thead class="bg-transparent">
 						<tr>
-							<th
-								class="border-r px-4 py-3 text-left font-semibold"
-								style="border-color: var(--table-border);">Category</th
-							>
-							{#each gameState.players as player}
+							<th class="border-r border-[var(--table-border)] px-4 py-3 text-left font-semibold">
+								Category
+							</th>
+							{#each game.players as player (player.id)}
 								<th
-									class="border-r px-4 py-3 text-center font-semibold"
-									style="border-color: var(--table-border);">{player.name}</th
+									class="border-r border-[var(--table-border)] px-4 py-3 text-center font-semibold"
 								>
+									{player.name}
+								</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
-						<!-- Upper Section -->
-						{#each UPPER_CATEGORIES as category}
-							<tr class="border-b" style="border-color: var(--table-border-soft);">
-								<td
-									class="border-r bg-gray-50 px-4 py-3 font-semibold dark:bg-gray-800"
-									style="border-color: var(--table-border);">{CATEGORY_NAMES[category]}</td
-								>
-								{#each gameState.players as player}
-									<td
-										class="min-h-[48px] cursor-pointer border-r px-4 py-3 text-center transition-colors duration-200 last:border-r-0"
-										style="border-color: var(--table-border); background: var(--card);"
-										onclick={() => {
-											console.log('Cell clicked for category:', category, 'player:', player.id);
-											handleScore(category, player.id);
-										}}
-									>
-										{console.log(
-											'Rendering cell for category:',
-											category,
-											'player:',
-											player.name,
-											'score:',
-											player.scores[category]
-										)}
-										{#if player.scores[category] !== null}
-											<span class="text-foreground font-medium">{player.scores[category]}</span>
-										{:else}
-											<span class="text-sm font-medium" style="color: var(--accent);"
-												>Click to score</span
-											>
-										{/if}
-									</td>
-								{/each}
-							</tr>
+						{#each UPPER_CATEGORIES as category (category)}
+							{@render categoryRow(category)}
 						{/each}
 
-						<!-- Upper Total -->
-						<tr class="border" style="border-color: var(--table-border); background: transparent;">
-							<td class="px-4 py-3 font-bold">Upper Total</td>
-							{#each gameState.players as player}
-								<td
-									class="border px-4 py-3 text-center font-bold"
-									style="border-color: var(--table-border);">{getUpperTotal(player)}</td
-								>
-							{/each}
-						</tr>
+						{@render totalRow('Upper Total', upperTotal)}
 
-						<!-- Upper Bonus -->
-						<tr class="border border-b-4" style="border-color: var(--table-border-soft); border-bottom-color: var(--accent);">
-							<td class="px-4 py-3 font-semibold">Bonus (65+ pts)</td>
-							{#each gameState.players as player}
-								<td class="border px-4 py-3 text-center" style="border-color: var(--table-border);">
-									{#if getUpperBonus(player) > 0}
-										<span class="font-bold text-green-600 dark:text-green-300"
-											>{getUpperBonus(player)}</span
-										>
+						<tr
+							class="border border-b-4 border-[var(--table-border-soft)]"
+							style="border-bottom-color: var(--accent);"
+						>
+							<td class="px-4 py-3 font-semibold">Bonus ({UPPER_BONUS_THRESHOLD}+ pts)</td>
+							{#each game.players as player (player.id)}
+								<td class="border border-[var(--table-border)] px-4 py-3 text-center">
+									{#if upperBonus(player) > 0}
+										<span class="font-bold text-green-500">{upperBonus(player)}</span>
 									{:else}
 										<span class="text-muted">0</span>
 									{/if}
@@ -285,53 +166,23 @@
 							{/each}
 						</tr>
 
-						<!-- Lower Section -->
-						{#each LOWER_CATEGORIES as category}
-							<tr class="border-b" style="border-color: var(--table-border-soft);">
-								<td
-									class="border-r bg-gray-50 px-4 py-3 font-semibold dark:bg-gray-700"
-									style="border-color: var(--table-border);">{CATEGORY_NAMES[category]}</td
-								>
-								{#each gameState.players as player}
-									<td
-										class="min-h-[48px] cursor-pointer border-r px-4 py-3 text-center transition-colors duration-200 last:border-r-0"
-										style="border-color: var(--table-border); background: var(--card);"
-										onclick={() => {
-											console.log('Cell clicked for category:', category, 'player:', player.id);
-											handleScore(category, player.id);
-										}}
-									>
-										{#if player.scores[category] !== null}
-											<span class="text-foreground font-medium">{player.scores[category]}</span>
-										{:else}
-											<span class="text-sm font-medium" style="color: var(--accent);"
-												>Click to score</span
-											>
-										{/if}
-									</td>
-								{/each}
-							</tr>
+						{#each LOWER_CATEGORIES as category (category)}
+							{@render categoryRow(category)}
 						{/each}
 
-						<!-- Lower Total -->
-						<tr class="border" style="border-color: var(--table-border);">
-							<td class="px-4 py-3 font-bold">Lower Total</td>
-							{#each gameState.players as player}
-								<td
-									class="border px-4 py-3 text-center font-bold"
-									style="border-color: var(--table-border);">{getLowerTotal(player)}</td
-								>
-							{/each}
-						</tr>
+						{@render totalRow('Lower Total', lowerTotal)}
 
-						<!-- Grand Total -->
-						<tr class="border border-t-4" style="border-color: var(--table-border); border-top-color: var(--accent);">
+						<tr
+							class="border border-t-4 border-[var(--table-border)]"
+							style="border-top-color: var(--accent);"
+						>
 							<td class="px-4 py-3 text-lg font-bold">Grand Total</td>
-							{#each gameState.players as player}
+							{#each game.players as player (player.id)}
 								<td
-									class="border px-4 py-3 text-center text-lg font-bold"
-									style="border-color: var(--table-border);">{getTotalScore(player)}</td
+									class="border border-[var(--table-border)] px-4 py-3 text-center text-lg font-bold"
 								>
+									{grandTotal(player)}
+								</td>
 							{/each}
 						</tr>
 					</tbody>
@@ -341,11 +192,6 @@
 	</div>
 </div>
 
-{#if modalOpen && selectedCategory}
-	<ScoreModal
-		category={selectedCategory}
-		isOpen={modalOpen}
-		on:score={(e) => handleModalScore(e.detail)}
-		on:close={handleModalClose}
-	/>
+{#if selectedCategory}
+	<ScoreModal category={selectedCategory} onscore={applyScore} onclose={closeScoreModal} />
 {/if}
