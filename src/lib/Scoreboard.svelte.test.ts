@@ -74,7 +74,7 @@ describe('Scoreboard', () => {
 		expect(rowValues('Grand Total')).toEqual(['15']);
 	});
 
-	it('awards the bonus once the upper total reaches 65', async () => {
+	it('awards the bonus once the upper total reaches 63', async () => {
 		const { addPlayer, rowValues } = await renderBoard();
 		await addPlayer('Ada');
 
@@ -83,18 +83,60 @@ describe('Scoreboard', () => {
 		game.scoreCategory('twos', 10, id);
 		game.scoreCategory('threes', 15, id);
 		game.scoreCategory('fours', 20, id);
-		game.scoreCategory('fives', 14, id);
+		game.scoreCategory('fives', 12, id);
 		await tick();
 
-		expect(rowValues('Upper Total')).toEqual(['64']);
+		expect(rowValues('Upper Total')).toEqual(['62']);
 		expect(rowValues('Bonus')).toEqual(['0']);
 
-		game.scoreCategory('fives', 15, id);
+		game.scoreCategory('fives', 13, id);
 		await tick();
 
-		expect(rowValues('Upper Total')).toEqual(['65']);
+		expect(rowValues('Upper Total')).toEqual(['63']);
 		expect(rowValues('Bonus')).toEqual(['35']);
-		expect(rowValues('Grand Total')).toEqual(['100']);
+		expect(rowValues('Grand Total')).toEqual(['98']);
+	});
+
+	it('erases a single category from the modal and rolls the totals back', async () => {
+		const { container, addPlayer, cell, rowValues } = await renderBoard();
+		await addPlayer('Ada');
+
+		const id = game.players[0].id;
+		game.scoreCategory('fives', 15, id);
+		game.scoreCategory('sixes', 24, id);
+		await tick();
+		expect(rowValues('Upper Total')).toEqual(['39']);
+
+		cell('Fives', 'Ada')?.click();
+		await tick();
+
+		const erase = [...container.querySelectorAll<HTMLButtonElement>('dialog button')].find((b) =>
+			b.textContent?.includes('Erase score')
+		);
+		expect(erase).toBeDefined();
+
+		erase!.click();
+		await tick();
+
+		expect(game.players[0].scores.fives).toBeNull();
+		expect(game.players[0].scores.sixes).toBe(24);
+		expect(container.querySelector('dialog')).toBeNull();
+		expect(cell('Fives', 'Ada')?.textContent?.trim()).toBe('Click to score');
+		expect(rowValues('Upper Total')).toEqual(['24']);
+		expect(rowValues('Grand Total')).toEqual(['24']);
+	});
+
+	it('does not offer Erase for a category that has never been scored', async () => {
+		const { container, addPlayer, cell } = await renderBoard();
+		await addPlayer('Ada');
+
+		cell('Fives', 'Ada')?.click();
+		await tick();
+
+		const erase = [...container.querySelectorAll<HTMLButtonElement>('dialog button')].filter((b) =>
+			b.textContent?.includes('Erase score')
+		);
+		expect(erase).toHaveLength(0);
 	});
 
 	it('removes a player', async () => {

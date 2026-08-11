@@ -80,13 +80,13 @@ describe('house rules', () => {
 		expect(fourOfAKindScore(6)).toBe(25);
 	});
 
-	it('awards the upper bonus at 65, not the standard 63', () => {
-		expect(UPPER_BONUS_THRESHOLD).toBe(65);
+	it('awards the upper bonus at the standard 63', () => {
+		expect(UPPER_BONUS_THRESHOLD).toBe(63);
 		expect(UPPER_BONUS_POINTS).toBe(35);
 
-		// 63 and 64 are deliberately not enough.
-		expect(upperBonus(playerWith({ ones: 63 }))).toBe(0);
-		expect(upperBonus(playerWith({ ones: 64 }))).toBe(0);
+		// 62 is one short.
+		expect(upperBonus(playerWith({ ones: 62 }))).toBe(0);
+		expect(upperBonus(playerWith({ ones: 63 }))).toBe(35);
 		expect(upperBonus(playerWith({ ones: 65 }))).toBe(35);
 		expect(upperBonus(playerWith({ ones: 100 }))).toBe(35);
 	});

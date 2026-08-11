@@ -96,6 +96,33 @@ describe('scoring', () => {
 
 		expect(game.players[0].scores.ones).toBe(5);
 	});
+
+	it('clears a single category back to unscored without touching the others', () => {
+		const game = new Game();
+		game.addPlayer('A');
+		const id = game.players[0].id;
+
+		game.scoreCategory('ones', 3, id);
+		game.scoreCategory('sixes', 24, id);
+		game.clearCategory('ones', id);
+
+		expect(game.players[0].scores.ones).toBeNull();
+		expect(game.players[0].scores.sixes).toBe(24);
+
+		// The clear must survive a reload, not just live in memory.
+		const reloaded = new Game();
+		expect(reloaded.players[0].scores.ones).toBeNull();
+		expect(reloaded.players[0].scores.sixes).toBe(24);
+	});
+
+	it('ignores a clear for an unknown player', () => {
+		const game = new Game();
+		game.addPlayer('A');
+		game.scoreCategory('ones', 3, game.players[0].id);
+
+		expect(() => game.clearCategory('ones', 'nope')).not.toThrow();
+		expect(game.players[0].scores.ones).toBe(3);
+	});
 });
 
 describe('persistence', () => {

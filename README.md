@@ -21,12 +21,13 @@ This scoreboard deliberately does **not** follow standard Yahtzee or standard Ya
 the way we play. These are intentional, and they are pinned by tests in `src/lib/scoring.test.ts`
 so they cannot drift:
 
-| Rule             | Here             | Standard Yahtzee  |
-| ---------------- | ---------------- | ----------------- |
-| Upper bonus      | 35 points at 65+ | 35 points at 63+  |
-| Three of a kind  | `value × 3 + 3`  | Sum of all 5 dice |
-| Four of a kind   | `value × 4 + 1`  | Sum of all 5 dice |
-| Pair / Two Pairs | Included         | Not a category    |
+| Rule             | Here            | Standard Yahtzee  |
+| ---------------- | --------------- | ----------------- |
+| Three of a kind  | `value × 3 + 3` | Sum of all 5 dice |
+| Four of a kind   | `value × 4 + 1` | Sum of all 5 dice |
+| Pair / Two Pairs | Included        | Not a category    |
+
+The upper bonus follows the standard rules: 35 points at 63+.
 
 For three and four of a kind, the non-matching dice count as a flat amount (3 and 1
 respectively) rather than being entered individually — that keeps scoring to a single tap.
@@ -93,6 +94,13 @@ npx vitest --project client
 ```
 
 Browser tests need Chromium once: `npx playwright install chromium`.
+
+If a machine already has a Chromium but cannot download the exact build Playwright asks for
+(offline, or a locked-down egress policy), point the tests at the existing binary instead:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome npm test
+```
 
 `npm run test:pwa` is separate because it runs against a real build: it serves `.svelte-kit/cloudflare`,
 registers the service worker, drops the network, reloads, and asserts the app still works.

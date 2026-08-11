@@ -3,10 +3,16 @@ import { render } from 'vitest-browser-svelte';
 import ScoreModal from './ScoreModal.svelte';
 import type { ScoringCategory } from './types';
 
-function open(category: ScoringCategory) {
+function open(category: ScoringCategory, current: number | null = null) {
 	const onscore = vi.fn();
+	const onerase = vi.fn();
 	const onclose = vi.fn();
-	return { onscore, onclose, rendered: render(ScoreModal, { category, onscore, onclose }) };
+	return {
+		onscore,
+		onerase,
+		onclose,
+		rendered: render(ScoreModal, { category, current, onscore, onerase, onclose })
+	};
 }
 
 function buttonsIn(container: HTMLElement, text: string) {
@@ -68,8 +74,9 @@ describe('ScoreModal', () => {
 		const { container } = await rendered;
 
 		const options = [...container.querySelectorAll<HTMLButtonElement>('.space-y-3 > button')];
-		options[4].click(); // value 5
+		expect(options).toHaveLength(7); // None + the six die values
 
+		options[5].click(); // value 5
 		expect(onscore).toHaveBeenCalledWith(18);
 	});
 
@@ -78,9 +85,23 @@ describe('ScoreModal', () => {
 		const { container } = await rendered;
 
 		const options = [...container.querySelectorAll<HTMLButtonElement>('.space-y-3 > button')];
-		options[4].click(); // value 5
+		expect(options).toHaveLength(7); // None + the six die values
 
+		options[5].click(); // value 5
 		expect(onscore).toHaveBeenCalledWith(21);
+	});
+
+	it('scratches three- and four-of-a-kind to 0, not to the house-rule remainder', async () => {
+		for (const category of ['three-of-a-kind', 'four-of-a-kind'] as const) {
+			const { onscore, rendered } = open(category);
+			const { container, unmount } = await rendered;
+
+			const options = [...container.querySelectorAll<HTMLButtonElement>('.space-y-3 > button')];
+			options[0].click(); // None
+
+			expect(onscore, category).toHaveBeenCalledWith(0);
+			await unmount();
+		}
 	});
 
 	it('submits two pairs only once both columns are chosen', async () => {
@@ -130,6 +151,28 @@ describe('ScoreModal', () => {
 			expect(onscore, category).toHaveBeenCalledWith(points);
 			await unmount();
 		}
+	});
+
+	it('offers Erase only for a category that is already scored', async () => {
+		const unscored = await open('yahtzee').rendered;
+		expect(buttonsIn(unscored.container, 'Erase score')).toHaveLength(0);
+		await unscored.unmount();
+
+		const { onerase, rendered } = open('yahtzee', 50);
+		const { container } = await rendered;
+
+		const erase = buttonsIn(container, 'Erase score');
+		expect(erase).toHaveLength(1);
+
+		erase[0].click();
+		expect(onerase).toHaveBeenCalled();
+	});
+
+	it('offers Erase for a category scratched to 0', async () => {
+		const { rendered } = open('yahtzee', 0);
+		const { container } = await rendered;
+
+		expect(buttonsIn(container, 'Erase score')).toHaveLength(1);
 	});
 
 	it('submits chance once five dice are picked', async () => {

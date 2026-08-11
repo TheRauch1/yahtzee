@@ -10,6 +10,10 @@
 	let selectedCategory = $state<ScoringCategory | null>(null);
 	let selectedPlayerId = $state<string | null>(null);
 
+	let selectedPlayer = $derived(
+		game.players.find((player) => player.id === selectedPlayerId) ?? null
+	);
+
 	function openScoreModal(category: ScoringCategory, playerId: string) {
 		selectedCategory = category;
 		selectedPlayerId = playerId;
@@ -23,6 +27,13 @@
 	function applyScore(score: number) {
 		if (selectedCategory && selectedPlayerId) {
 			game.scoreCategory(selectedCategory, score, selectedPlayerId);
+		}
+		closeScoreModal();
+	}
+
+	function eraseScore() {
+		if (selectedCategory && selectedPlayerId) {
+			game.clearCategory(selectedCategory, selectedPlayerId);
 		}
 		closeScoreModal();
 	}
@@ -193,5 +204,11 @@
 </div>
 
 {#if selectedCategory}
-	<ScoreModal category={selectedCategory} onscore={applyScore} onclose={closeScoreModal} />
+	<ScoreModal
+		category={selectedCategory}
+		current={selectedPlayer?.scores[selectedCategory] ?? null}
+		onscore={applyScore}
+		onerase={eraseScore}
+		onclose={closeScoreModal}
+	/>
 {/if}

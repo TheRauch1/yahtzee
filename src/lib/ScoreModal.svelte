@@ -18,11 +18,14 @@
 
 	interface Props {
 		category: ScoringCategory;
+		/** The score already recorded for this category, or null if it is still unscored. */
+		current: number | null;
 		onscore: (score: number) => void;
+		onerase: () => void;
 		onclose: () => void;
 	}
 
-	let { category, onscore, onclose }: Props = $props();
+	let { category, current, onscore, onerase, onclose }: Props = $props();
 
 	const DIE_VALUES = [1, 2, 3, 4, 5, 6];
 	const MAX_CHANCE_DICE = 5;
@@ -199,6 +202,15 @@
 			<p class="text-muted mb-4 text-sm">
 				Select the value for your three of a kind (house rule: the other two dice count as 3):
 			</p>
+
+			<button
+				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
+				onclick={() => submit(0)}
+			>
+				<span class="text-muted">None</span>
+				<span class="text-lg font-semibold">0</span>
+			</button>
+
 			{#each DIE_VALUES as value (value)}
 				<button
 					class="flex w-full items-center justify-between rounded-lg border border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
@@ -218,6 +230,15 @@
 			<p class="text-muted mb-4 text-sm">
 				Select the value for your four of a kind (house rule: the remaining die counts as 1):
 			</p>
+
+			<button
+				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
+				onclick={() => submit(0)}
+			>
+				<span class="text-muted">None</span>
+				<span class="text-lg font-semibold">0</span>
+			</button>
+
 			{#each DIE_VALUES as value (value)}
 				<button
 					class="flex w-full items-center justify-between rounded-lg border border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
@@ -428,6 +449,14 @@
 	{/if}
 
 	<div class="mt-4 flex gap-3">
+		{#if current !== null}
+			<button
+				class="flex-1 rounded-md bg-red-500/15 px-4 py-2 text-red-500 hover:bg-red-500/25"
+				onclick={onerase}
+			>
+				Erase score
+			</button>
+		{/if}
 		<button
 			class="flex-1 rounded-md border border-[var(--table-border)] bg-transparent px-4 py-2"
 			onclick={onclose}
