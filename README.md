@@ -95,6 +95,13 @@ npx vitest --project client
 
 Browser tests need Chromium once: `npx playwright install chromium`.
 
+If a machine already has a Chromium but cannot download the exact build Playwright asks for
+(offline, or a locked-down egress policy), point the tests at the existing binary instead:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome npm test
+```
+
 `npm run test:pwa` is separate because it runs against a real build: it serves `.svelte-kit/cloudflare`,
 registers the service worker, drops the network, reloads, and asserts the app still works.
 Run `npm run build` first.
