@@ -89,6 +89,15 @@ export class Game {
 		this.save();
 	}
 
+	/** Return a single category to unscored, so a mis-tap does not need a full reset. */
+	clearCategory(category: ScoringCategory, playerId: string) {
+		const player = this.players.find((candidate) => candidate.id === playerId);
+		if (!player) return;
+
+		player.scores[category] = null;
+		this.save();
+	}
+
 	reset() {
 		this.players = [];
 		this.save();

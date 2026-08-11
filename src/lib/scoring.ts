@@ -8,11 +8,12 @@ import { LOWER_CATEGORIES, UPPER_CATEGORIES } from './types';
  * Yatzy. The values below are how we actually play — they are intentional, they are
  * covered by tests, and they should not be "corrected" to match a rulebook.
  *
- *  - Upper bonus is 35 points at 65+ (standard rulesets use 63).
  *  - Three of a kind scores value * 3 + 3 (the two remaining dice count as a flat 3).
  *  - Four of a kind scores value * 4 + 1 (the remaining die counts as a flat 1).
+ *
+ * The upper bonus is the standard 35 points at 63+.
  */
-export const UPPER_BONUS_THRESHOLD = 65;
+export const UPPER_BONUS_THRESHOLD = 63;
 export const UPPER_BONUS_POINTS = 35;
 
 const THREE_OF_A_KIND_REMAINDER = 3;
