@@ -1,11 +1,15 @@
 <script lang="ts">
 	import AddPlayerForm from './AddPlayerForm.svelte';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
 	import ScoreModal from './ScoreModal.svelte';
 	import { game } from './gameStore.svelte';
+	import { locale } from './locale.svelte';
 	import { theme } from './theme.svelte';
 	import type { Player, ScoringCategory } from './types';
-	import { CATEGORY_NAMES, LOWER_CATEGORIES, UPPER_CATEGORIES } from './types';
+	import { LOWER_CATEGORIES, UPPER_CATEGORIES } from './types';
 	import { UPPER_BONUS_THRESHOLD, grandTotal, lowerTotal, upperBonus, upperTotal } from './scoring';
+
+	let t = $derived(locale.t);
 
 	let selectedCategory = $state<ScoringCategory | null>(null);
 	let selectedPlayerId = $state<string | null>(null);
@@ -44,7 +48,7 @@
 		<td
 			class="border-r border-[var(--table-border)] bg-[var(--row-header)] px-4 py-3 font-semibold"
 		>
-			{CATEGORY_NAMES[category]}
+			{t.categories[category]}
 		</td>
 		{#each game.players as player (player.id)}
 			<td
@@ -52,13 +56,15 @@
 			>
 				<button
 					class="min-h-[48px] w-full cursor-pointer px-4 py-3 transition-colors duration-200 hover:bg-[var(--hover)]"
-					aria-label={`Score ${CATEGORY_NAMES[category]} for ${player.name}`}
+					aria-label={t.scoreboard.scoreFor(t.categories[category], player.name)}
 					onclick={() => openScoreModal(category, player.id)}
 				>
 					{#if player.scores[category] !== null}
 						<span class="text-foreground font-medium">{player.scores[category]}</span>
 					{:else}
-						<span class="text-sm font-medium" style="color: var(--accent);">Click to score</span>
+						<span class="text-sm font-medium" style="color: var(--accent);"
+							>{t.scoreboard.clickToScore}</span
+						>
 					{/if}
 				</button>
 			</td>
@@ -83,37 +89,38 @@
 			class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
 		>
 			<div>
-				<h1 class="text-3xl font-extrabold">Yahtzee Scoreboard</h1>
+				<h1 class="text-3xl font-extrabold">{t.scoreboard.title}</h1>
 				<p class="text-muted mt-1 text-sm">
-					Keep score, add players, and switch between light and dark themes.
+					{t.scoreboard.subtitle}
 				</p>
 			</div>
 			<div class="flex items-center space-x-3">
+				<LanguageSwitcher />
 				<button
 					class="btn-primary rounded-md border border-transparent px-4 py-2"
 					onclick={() => theme.toggle()}
 					aria-pressed={theme.isDark}
 				>
-					{theme.isDark ? 'Light Mode' : 'Dark Mode'}
+					{theme.isDark ? t.scoreboard.lightMode : t.scoreboard.darkMode}
 				</button>
 				<button
 					class="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
 					onclick={() => game.reset()}
 				>
-					Reset
+					{t.scoreboard.reset}
 				</button>
 			</div>
 		</header>
 
 		{#if game.players.length === 0}
 			<div class="card mb-6 p-6">
-				<h2 class="mb-4 text-xl font-semibold">Add Players</h2>
+				<h2 class="mb-4 text-xl font-semibold">{t.scoreboard.addPlayers}</h2>
 				<AddPlayerForm onadd={(name) => game.addPlayer(name)} />
 			</div>
 		{:else}
 			<div class="card mb-6 p-6">
 				<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-					<h2 class="text-xl font-semibold">Yahtzee Scoreboard</h2>
+					<h2 class="text-xl font-semibold">{t.scoreboard.title}</h2>
 					<div class="flex flex-wrap gap-2">
 						{#each game.players as player (player.id)}
 							<div
@@ -122,7 +129,7 @@
 								<span class="font-medium">{player.name}</span>
 								<button
 									class="ml-2 text-xs text-red-500 hover:text-red-400"
-									aria-label={`Remove ${player.name}`}
+									aria-label={t.scoreboard.removePlayer(player.name)}
 									onclick={() => game.removePlayer(player.id)}
 								>
 									×
@@ -133,7 +140,7 @@
 				</div>
 
 				<div class="border-t border-[var(--table-border)] pt-4">
-					<h3 class="mb-2 text-lg font-semibold">Add More Players</h3>
+					<h3 class="mb-2 text-lg font-semibold">{t.scoreboard.addMorePlayers}</h3>
 					<AddPlayerForm onadd={(name) => game.addPlayer(name)} />
 				</div>
 			</div>
@@ -143,7 +150,7 @@
 					<thead class="bg-transparent">
 						<tr>
 							<th class="border-r border-[var(--table-border)] px-4 py-3 text-left font-semibold">
-								Category
+								{t.scoreboard.categoryHeader}
 							</th>
 							{#each game.players as player (player.id)}
 								<th
@@ -159,13 +166,13 @@
 							{@render categoryRow(category)}
 						{/each}
 
-						{@render totalRow('Upper Total', upperTotal)}
+						{@render totalRow(t.scoreboard.upperTotal, upperTotal)}
 
 						<tr
 							class="border border-b-4 border-[var(--table-border-soft)]"
 							style="border-bottom-color: var(--accent);"
 						>
-							<td class="px-4 py-3 font-semibold">Bonus ({UPPER_BONUS_THRESHOLD}+ pts)</td>
+							<td class="px-4 py-3 font-semibold">{t.scoreboard.bonus(UPPER_BONUS_THRESHOLD)}</td>
 							{#each game.players as player (player.id)}
 								<td class="border border-[var(--table-border)] px-4 py-3 text-center">
 									{#if upperBonus(player) > 0}
@@ -181,13 +188,13 @@
 							{@render categoryRow(category)}
 						{/each}
 
-						{@render totalRow('Lower Total', lowerTotal)}
+						{@render totalRow(t.scoreboard.lowerTotal, lowerTotal)}
 
 						<tr
 							class="border border-t-4 border-[var(--table-border)]"
 							style="border-top-color: var(--accent);"
 						>
-							<td class="px-4 py-3 text-lg font-bold">Grand Total</td>
+							<td class="px-4 py-3 text-lg font-bold">{t.scoreboard.grandTotal}</td>
 							{#each game.players as player (player.id)}
 								<td
 									class="border border-[var(--table-border)] px-4 py-3 text-center text-lg font-bold"

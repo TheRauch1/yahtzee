@@ -3,12 +3,16 @@ import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
 import Scoreboard from './Scoreboard.svelte';
 import { game } from './gameStore.svelte';
+import { locale } from './locale.svelte';
 import { theme } from './theme.svelte';
 
 beforeEach(() => {
 	localStorage.clear();
 	game.reset();
 	theme.set('dark');
+	// The locale store is a module singleton, so a test that switches language
+	// would otherwise leak German strings into every assertion after it.
+	locale.set('en');
 });
 
 async function renderBoard() {
@@ -178,6 +182,52 @@ describe('Scoreboard', () => {
 		toggle?.click();
 		await tick();
 		expect(document.documentElement.classList.contains('dark')).toBe(true);
+	});
+
+	it('switches the interface language and remembers the choice', async () => {
+		const { container } = await renderBoard();
+
+		expect(container.textContent).toContain('Add Players');
+
+		const select = container.querySelector<HTMLSelectElement>('select')!;
+		expect(select.value).toBe('en');
+
+		select.value = 'de';
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+		await tick();
+
+		expect(container.textContent).toContain('Yahtzee-Punktetafel');
+		expect(container.textContent).toContain('Spieler hinzufügen');
+		expect(container.textContent).not.toContain('Add Players');
+		expect(localStorage.getItem('yahtzee:locale')).toBe('de');
+		expect(document.documentElement.lang).toBe('de');
+
+		select.value = 'en';
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+		await tick();
+
+		expect(container.textContent).toContain('Add Players');
+		expect(localStorage.getItem('yahtzee:locale')).toBe('en');
+	});
+
+	it('translates the category names and the score-cell labels', async () => {
+		const { container, addPlayer, cell } = await renderBoard();
+		await addPlayer('Ada');
+
+		expect(cell('Fives', 'Ada')).not.toBeNull();
+
+		locale.set('de');
+		await tick();
+
+		expect(container.textContent).toContain('Fünfer');
+		// A lower-category name, and one that is distinctly German — 'Yahtzee' is
+		// spelled the same in both languages, so it would pass without translating.
+		expect(container.textContent).toContain('Dreierpasch');
+		expect(container.textContent).toContain('Gesamtsumme');
+
+		// The English label is gone and the interpolated German one replaces it.
+		expect(cell('Fives', 'Ada')).toBeNull();
+		expect(container.querySelector('button[aria-label="Fünfer für Ada werten"]')).not.toBeNull();
 	});
 
 	it('gives every score cell an accessible name so the table is keyboard usable', async () => {

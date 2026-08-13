@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ScoringCategory } from './types';
-	import { CATEGORY_NAMES, UPPER_CATEGORIES } from './types';
+	import { UPPER_CATEGORIES } from './types';
+	import { locale } from './locale.svelte';
 	import DiceFace from './DiceFace.svelte';
 	import {
 		LARGE_STRAIGHT_POINTS,
@@ -26,6 +27,8 @@
 	}
 
 	let { category, current, onscore, onerase, onclose }: Props = $props();
+
+	let t = $derived(locale.t);
 
 	const DIE_VALUES = [1, 2, 3, 4, 5, 6];
 	const MAX_CHANCE_DICE = 5;
@@ -92,13 +95,13 @@
 	onclick={onDialogClick}
 >
 	<h2 id="score-modal-title" class="mb-4 text-2xl font-extrabold">
-		Score for {CATEGORY_NAMES[category]}
+		{t.scoreModal.scoreFor(t.categories[category])}
 	</h2>
 
 	{#if isUpper}
 		<div class="space-y-3">
 			<p class="text-muted mb-4 text-sm">
-				How many {CATEGORY_NAMES[category].toLowerCase()} did you roll?
+				{t.scoreModal.howManyDidYouRoll(t.categories[category])}
 			</p>
 			{#each [0, 1, 2, 3, 4, 5] as count (count)}
 				<button
@@ -110,7 +113,7 @@
 							<DiceFace value={upperCategoryValue(category)} size={24} />
 						{/each}
 						{#if count === 0}
-							<span class="text-muted text-sm">None</span>
+							<span class="text-muted text-sm">{t.scoreModal.none}</span>
 						{/if}
 					</div>
 					<span class="text-foreground text-lg font-semibold">
@@ -121,7 +124,7 @@
 		</div>
 	{:else if category === 'pair'}
 		<div class="space-y-3">
-			<p class="text-muted mb-4 text-sm">Select your pair:</p>
+			<p class="text-muted mb-4 text-sm">{t.scoreModal.selectYourPair}</p>
 			{#each [0, ...DIE_VALUES] as value (value)}
 				<button
 					class="flex w-full items-center justify-between rounded-lg border border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
@@ -129,7 +132,7 @@
 				>
 					<div class="flex items-center space-x-2">
 						{#if value === 0}
-							<span class="text-muted text-sm">None</span>
+							<span class="text-muted text-sm">{t.scoreModal.none}</span>
 						{:else}
 							<DiceFace {value} size={24} />
 							<DiceFace {value} size={24} />
@@ -141,19 +144,19 @@
 		</div>
 	{:else if category === 'two-pairs'}
 		<div class="space-y-4">
-			<p class="text-muted mb-4 text-sm">Select your two pairs:</p>
+			<p class="text-muted mb-4 text-sm">{t.scoreModal.selectYourTwoPairs}</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
 			<div class="grid grid-cols-2 gap-4">
 				<div class="space-y-2">
-					<h3 class="text-muted text-center text-sm font-medium">First Pair</h3>
+					<h3 class="text-muted text-center text-sm font-medium">{t.scoreModal.firstPair}</h3>
 					{#each DIE_VALUES as value (value)}
 						<button
 							class="flex w-full items-center justify-between rounded border p-2 transition-colors hover:bg-[var(--hover)] {firstPair ===
@@ -173,7 +176,7 @@
 				</div>
 
 				<div class="space-y-2">
-					<h3 class="text-muted text-center text-sm font-medium">Second Pair</h3>
+					<h3 class="text-muted text-center text-sm font-medium">{t.scoreModal.secondPair}</h3>
 					{#each DIE_VALUES as value (value)}
 						<button
 							class="flex w-full items-center justify-between rounded border p-2 transition-colors hover:bg-[var(--hover)] {secondPair ===
@@ -194,20 +197,20 @@
 			</div>
 
 			<p class="text-muted mt-4 text-center text-sm">
-				Select one pair from each column to submit your score
+				{t.scoreModal.selectOnePairPerColumn}
 			</p>
 		</div>
 	{:else if category === 'three-of-a-kind'}
 		<div class="space-y-3">
 			<p class="text-muted mb-4 text-sm">
-				Select the value for your three of a kind (house rule: the other two dice count as 3):
+				{t.scoreModal.selectThreeOfAKindHint}
 			</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
@@ -228,14 +231,14 @@
 	{:else if category === 'four-of-a-kind'}
 		<div class="space-y-3">
 			<p class="text-muted mb-4 text-sm">
-				Select the value for your four of a kind (house rule: the remaining die counts as 1):
+				{t.scoreModal.selectFourOfAKindHint}
 			</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
@@ -256,19 +259,21 @@
 		</div>
 	{:else if category === 'full-house'}
 		<div class="space-y-4">
-			<p class="text-muted mb-4 text-sm">Select your full house (3 of a kind + pair):</p>
+			<p class="text-muted mb-4 text-sm">{t.scoreModal.selectFullHouseHint}</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
 			<div class="grid grid-cols-2 gap-4">
 				<div class="space-y-2">
-					<h3 class="text-muted text-center text-sm font-medium">Three of a Kind</h3>
+					<h3 class="text-muted text-center text-sm font-medium">
+						{t.categories['three-of-a-kind']}
+					</h3>
 					{#each DIE_VALUES as value (value)}
 						<button
 							class="flex w-full items-center justify-between rounded border p-2 transition-colors hover:bg-[var(--hover)] {threeOfAKind ===
@@ -289,7 +294,7 @@
 				</div>
 
 				<div class="space-y-2">
-					<h3 class="text-muted text-center text-sm font-medium">Pair</h3>
+					<h3 class="text-muted text-center text-sm font-medium">{t.categories.pair}</h3>
 					{#each DIE_VALUES as value (value)}
 						<button
 							class="flex w-full items-center justify-between rounded border p-2 transition-colors hover:bg-[var(--hover)] {fullHousePair ===
@@ -310,7 +315,7 @@
 			</div>
 
 			<p class="text-muted mt-4 text-center text-sm">
-				Select three-of-a-kind and pair to submit your score
+				{t.scoreModal.selectThreeAndPair}
 			</p>
 		</div>
 	{:else if category === 'small-straight' || category === 'large-straight'}
@@ -319,14 +324,14 @@
 		{@const faces = isSmall ? [1, 2, 3, 4, 5] : [2, 3, 4, 5, 6]}
 		<div class="space-y-3">
 			<p class="text-muted mb-4 text-sm">
-				Select your {isSmall ? 'small' : 'large'} straight:
+				{isSmall ? t.scoreModal.selectSmallStraight : t.scoreModal.selectLargeStraight}
 			</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
@@ -344,13 +349,13 @@
 		</div>
 	{:else if category === 'yahtzee'}
 		<div class="space-y-3">
-			<p class="text-muted mb-4 text-sm">Select your Yahtzee:</p>
+			<p class="text-muted mb-4 text-sm">{t.scoreModal.selectYahtzee}</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(0)}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
@@ -358,13 +363,13 @@
 				class="flex w-full items-center justify-between rounded-lg border border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 				onclick={() => submit(YAHTZEE_POINTS)}
 			>
-				<span class="font-medium">Yahtzee</span>
+				<span class="font-medium">{t.categories.yahtzee}</span>
 				<span class="text-lg font-semibold">{YAHTZEE_POINTS}</span>
 			</button>
 		</div>
 	{:else if category === 'chance'}
 		<div class="space-y-4">
-			<p class="text-muted mb-4 text-sm">Select your 5 dice for Chance (sum of all dice):</p>
+			<p class="text-muted mb-4 text-sm">{t.scoreModal.selectChanceDice}</p>
 
 			<button
 				class="flex w-full items-center justify-between rounded-lg border-2 border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
@@ -373,20 +378,20 @@
 					submit(0);
 				}}
 			>
-				<span class="text-muted">None</span>
+				<span class="text-muted">{t.scoreModal.none}</span>
 				<span class="text-lg font-semibold">0</span>
 			</button>
 
 			<div class="space-y-3">
 				<h3 class="text-muted text-center text-sm font-medium">
-					Click dice values to add (up to {MAX_CHANCE_DICE})
+					{t.scoreModal.clickDiceToAdd(MAX_CHANCE_DICE)}
 				</h3>
 				<div class="grid grid-cols-3 gap-2">
 					{#each DIE_VALUES as value (value)}
 						<button
 							class="flex flex-col items-center justify-center rounded-lg border border-[var(--table-border)] p-3 transition-colors hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
 							disabled={selectedDice.length >= MAX_CHANCE_DICE}
-							aria-label={`Add a ${value}`}
+							aria-label={t.scoreModal.addDie(value)}
 							onclick={() => addDie(value)}
 						>
 							<DiceFace {value} size={32} />
@@ -400,12 +405,12 @@
 				<div class="border-t border-[var(--table-border)] pt-4">
 					<div class="space-y-3">
 						<div class="flex items-center justify-between">
-							<span class="text-muted text-sm font-medium">Selected Dice:</span>
+							<span class="text-muted text-sm font-medium">{t.scoreModal.selectedDice}</span>
 							<button
 								class="rounded bg-red-500/15 px-3 py-1 text-xs text-red-500 hover:bg-red-500/25"
 								onclick={() => (selectedDice = [])}
 							>
-								Clear All
+								{t.scoreModal.clearAll}
 							</button>
 						</div>
 
@@ -415,7 +420,7 @@
 									<DiceFace value={die} size={28} />
 									<button
 										class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
-										aria-label={`Remove die showing ${die}`}
+										aria-label={t.scoreModal.removeDie(die)}
 										onclick={() => (selectedDice = selectedDice.filter((_, i) => i !== index))}
 									>
 										×
@@ -427,12 +432,12 @@
 						<div
 							class="flex items-center justify-between rounded-lg border border-blue-500/30 bg-blue-500/10 p-3"
 						>
-							<span class="font-medium">Total Score:</span>
+							<span class="font-medium">{t.scoreModal.totalScore}</span>
 							<span class="text-xl font-bold">{chanceScore(selectedDice)}</span>
 						</div>
 
 						<p class="text-muted text-center text-sm">
-							{MAX_CHANCE_DICE - selectedDice.length} more dice to select
+							{t.scoreModal.moreDiceToSelect(MAX_CHANCE_DICE - selectedDice.length)}
 						</p>
 					</div>
 				</div>
@@ -443,7 +448,7 @@
 			class="flex w-full items-center justify-between rounded-lg border border-[var(--table-border)] p-3 hover:bg-[var(--hover)]"
 			onclick={() => submit(0)}
 		>
-			<span>Score 0</span>
+			<span>{t.scoreModal.scoreZero}</span>
 			<span class="text-lg font-semibold">0</span>
 		</button>
 	{/if}
@@ -454,14 +459,14 @@
 				class="flex-1 rounded-md bg-red-500/15 px-4 py-2 text-red-500 hover:bg-red-500/25"
 				onclick={onerase}
 			>
-				Erase score
+				{t.scoreModal.eraseScore}
 			</button>
 		{/if}
 		<button
 			class="flex-1 rounded-md border border-[var(--table-border)] bg-transparent px-4 py-2"
 			onclick={onclose}
 		>
-			Cancel
+			{t.scoreModal.cancel}
 		</button>
 	</div>
 </dialog>
