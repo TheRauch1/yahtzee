@@ -71,6 +71,34 @@ describe('ScoreDialog', () => {
 		expect(onClose).toHaveBeenCalled();
 	});
 
+	// Pins the reset that the `key` and the popup's unmount exist to give. The
+	// picker now outlives `selected` by design, so that it animates out with
+	// content in it rather than as an empty box — this is the guard that the
+	// surviving copy never rides along into the next open of the same cell.
+	//
+	// Note it does not pin the flicker fix itself: browser tests run without the
+	// stylesheet, so there is no exit animation, and the popup unmounts at once.
+	// The no-blank-box behaviour was verified by sampling frames in a real browser.
+	it('does not carry picker state into a reopen of the same cell', async () => {
+		const selected: ScoreDialogSelection = { category: 'chance', playerId: 'p1' };
+		const props = { current: null, onScore: vi.fn(), onErase: vi.fn(), onClose: vi.fn() };
+
+		const rendered = await render(<ScoreDialog selected={selected} {...props} />);
+		await expect.element(page.getByRole('dialog')).toBeVisible();
+
+		const dice = q('.grid-cols-3 > button');
+		await click(dice[0]);
+		await click(dice[1]);
+		expect(document.body.textContent).toContain('more dice to select');
+
+		// Close, then reopen the very same player + category.
+		await rendered.rerender(<ScoreDialog selected={null} {...props} />);
+		await rendered.rerender(<ScoreDialog selected={selected} {...props} />);
+		await expect.element(page.getByRole('dialog')).toBeVisible();
+
+		expect(document.body.textContent).not.toContain('more dice to select');
+	});
+
 	it('offers 0 to 5 dice for an upper category and scores by face value', async () => {
 		const { onScore } = await open('fives');
 		const options = q('.space-y-3 > button');
