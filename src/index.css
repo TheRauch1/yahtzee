@@ -1,6 +1,41 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+
+/*
+ * The four Base UI state variants this app actually uses, so the primitives in
+ * components/ui can style themselves off Base UI's data attributes.
+ *
+ * These previously came from `@import 'shadcn/tailwind.css'`, which meant
+ * installing the shadcn CLI — ~170 transitive packages, 6.5 MB — to supply the
+ * 20 lines below. The CLI is still the right way to *add* a component
+ * (`npx shadcn@latest add ...`, configured by components.json); it just does
+ * not need to be a dependency to build the app.
+ *
+ * If a newly added primitive styles off another data attribute, copy that
+ * variant across too — a missing one compiles silently to nothing.
+ */
+@custom-variant data-open {
+	&:where([data-state='open']),
+	&:where([data-open]:not([data-open='false'])) {
+		@slot;
+	}
+}
+@custom-variant data-closed {
+	&:where([data-state='closed']),
+	&:where([data-closed]:not([data-closed='false'])) {
+		@slot;
+	}
+}
+@custom-variant data-horizontal {
+	&:where([data-orientation='horizontal']) {
+		@slot;
+	}
+}
+@custom-variant data-vertical {
+	&:where([data-orientation='vertical']) {
+		@slot;
+	}
+}
 
 /*
  * Drive Tailwind's `dark:` variant from the `.dark` class instead of the OS

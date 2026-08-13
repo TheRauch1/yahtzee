@@ -153,6 +153,11 @@ Pages, S3 + CDN, ...) at `dist/` after `npm run build`.
 - If you change the house rules, update `scoring.test.ts` and the table above in the same commit.
 - Files under `src/components/ui/` are shadcn/Base UI primitives — treat them as generated code,
   not hand-tuned application logic.
+- To add a primitive, run `npx shadcn@latest add <name>` (the CLI is deliberately **not** a
+  dependency — it pulls ~170 packages to supply a stylesheet). If the new component styles itself
+  off a Base UI data attribute, copy the matching `@custom-variant` into `src/index.css`; the four
+  in use are listed there. A missing variant compiles to nothing silently, so check the component
+  actually animates rather than trusting a green build.
 - Run `npm run lint && npm run check && npm test` before pushing; CI runs the same, plus the PWA check.
 
 ## License
