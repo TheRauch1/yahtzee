@@ -155,7 +155,7 @@ export const translations: Record<Locale, Translation> = {
 			'full-house': 'Full House',
 			'small-straight': 'Kleine Straße',
 			'large-straight': 'Große Straße',
-			yahtzee: 'Kniffel',
+			yahtzee: 'Yahtzee',
 			chance: 'Chance'
 		},
 		language: {
@@ -200,7 +200,7 @@ export const translations: Record<Locale, Translation> = {
 			selectThreeAndPair: 'Wähle Dreierpasch und Paar, um deine Punktzahl einzutragen',
 			selectSmallStraight: 'Wähle deine kleine Straße:',
 			selectLargeStraight: 'Wähle deine große Straße:',
-			selectYahtzee: 'Wähle deinen Kniffel:',
+			selectYahtzee: 'Wähle dein Yahtzee:',
 			selectChanceDice: 'Wähle deine 5 Würfel für die Chance (Summe aller Würfel):',
 			clickDiceToAdd: (max) => `Klicke auf Würfelwerte zum Hinzufügen (bis zu ${max})`,
 			addDie: (value) => `Eine ${value} hinzufügen`,

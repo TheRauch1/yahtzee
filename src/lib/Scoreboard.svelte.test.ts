@@ -220,7 +220,9 @@ describe('Scoreboard', () => {
 		await tick();
 
 		expect(container.textContent).toContain('Fünfer');
-		expect(container.textContent).toContain('Kniffel');
+		// A lower-category name, and one that is distinctly German — 'Yahtzee' is
+		// spelled the same in both languages, so it would pass without translating.
+		expect(container.textContent).toContain('Dreierpasch');
 		expect(container.textContent).toContain('Gesamtsumme');
 
 		// The English label is gone and the interpolated German one replaces it.
