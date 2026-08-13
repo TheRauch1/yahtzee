@@ -13,6 +13,7 @@ There is no dice rolling and no computer opponent — it is the paper score shee
 - Automatic upper total, bonus, lower total and grand total
 - Games persist to `localStorage` — closing the tab does not lose the sheet
 - Light and dark themes, dark by default
+- English and German, switchable in the header and remembered across reloads
 - Installable PWA that works with no network at all
 
 ## House rules
@@ -62,16 +63,19 @@ Then open the address Vite prints (usually http://localhost:5173).
 ```
 src/
   app.css                    theme variables + Tailwind setup
-  app.html                   document shell, PWA tags, no-flash theme script
+  app.html                   document shell, PWA tags, no-flash theme + lang script
   service-worker.ts          precaches the app for offline use
   lib/
     scoring.ts               all scoring maths (pure, unit-tested)
     gameStore.svelte.ts      players, scores and localStorage persistence
     theme.svelte.ts          light/dark preference
+    translations.ts          English and German strings
+    locale.svelte.ts         language preference
     Scoreboard.svelte        the score table
     ScoreModal.svelte        per-category dice picker
     DiceFace.svelte          a single die
     AddPlayerForm.svelte     player name input
+    LanguageSwitcher.svelte  English/German dropdown
   routes/
     +layout.ts               prerender = true
     +layout.svelte           global styles

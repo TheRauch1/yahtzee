@@ -24,6 +24,8 @@ class LocaleState {
 	set(locale: Locale) {
 		this.current = locale;
 
+		// The inline script in app.html applies the stored language before first
+		// paint, so this only has to keep the attribute honest after a switch.
 		if (typeof document !== 'undefined') {
 			document.documentElement.lang = locale;
 		}
@@ -37,7 +39,3 @@ class LocaleState {
 }
 
 export const locale = new LocaleState();
-
-if (typeof document !== 'undefined') {
-	document.documentElement.lang = locale.current;
-}

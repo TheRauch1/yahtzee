@@ -24,6 +24,19 @@
 			} catch {
 				document.documentElement.classList.add('dark');
 			}
+
+			// The page is prerendered in English, so tag the document with the saved
+			// language before first paint. Without this the markup claims lang="en"
+			// until hydration and assistive tech reads German content as English.
+			// Keep the list in sync with LOCALES in src/lib/translations.ts.
+			try {
+				const savedLocale = localStorage.getItem('yahtzee:locale');
+				if (['en', 'de'].includes(savedLocale)) {
+					document.documentElement.lang = savedLocale;
+				}
+			} catch {
+				// No stored preference reachable; the prerendered lang="en" stands.
+			}
 		</script>
 
 		%sveltekit.head%
