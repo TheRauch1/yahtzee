@@ -37,7 +37,9 @@ respectively) rather than being entered individually — that keeps scoring to a
 
 ## Quick start
 
-Requires Node.js 22+.
+Requires Node.js 22+ — `package.json` enforces it (`.npmrc` sets `engine-strict=true`, so an
+older Node fails at install rather than at runtime), and `.node-version` pins it for CI and
+hosts that read it.
 
 ```bash
 npm install
@@ -93,17 +95,28 @@ src/
     theme-toggle.tsx              light/dark icon button
     confirm-dialog.tsx            reusable "are you sure?" wrapper
     ui/                           shadcn-generated primitives (Base UI), do not hand-edit
-public/
-  manifest.webmanifest            PWA manifest
+  test/
+    setup-node.ts                 localStorage polyfill for the node project
+    setup-browser.ts              store reset + cleanup between browser tests
+public/                          copied to dist/ verbatim
   icons/                          app icons (SVG sources + generated PNGs)
+  robots.txt
+scripts/
+  verify-pwa.mjs                  offline/manifest/service-worker check (npm run test:pwa)
 ```
+
+The PWA manifest is not a file here — `vite-plugin-pwa` generates `dist/manifest.webmanifest`
+from the `manifest` option in `vite.config.ts`, which is its single source of truth.
 
 ## Testing
 
 Two Vitest projects run from one config:
 
-- **unit** — pure logic in Node (`src/**/*.test.ts`)
+- **unit** — pure logic in Node (`src/**/*.test.{ts,tsx}`, minus the browser tests below)
 - **browser** — components in real Chromium via `vitest-browser-react` (`src/**/*.browser.test.tsx`)
+
+Browser tests run without the stylesheet, so they cover behaviour and the DOM, not appearance:
+anything that depends on a CSS animation having run cannot be asserted there.
 
 ```bash
 npm test                  # both projects
@@ -147,17 +160,23 @@ The build output in `dist/` is a set of static assets — no server-side renderi
 nothing to run at request time. Point any static host (Cloudflare Pages, Netlify, GitHub
 Pages, S3 + CDN, ...) at `dist/` after `npm run build`.
 
+This repo holds no host configuration: the Cloudflare Pages project is wired up in the
+Cloudflare dashboard, so its build command and **output directory (`dist`)** are set there,
+not here. A host that reads `.node-version` will pick up Node 22 from it; one that does not
+needs its Node version set alongside the output directory, or `npm ci` fails the engine check.
+
 ## Contributing notes
 
 - `src/lib/scoring.ts` is the only place scoring maths should live. Keep it pure and add a test.
 - If you change the house rules, update `scoring.test.ts` and the table above in the same commit.
 - Files under `src/components/ui/` are shadcn/Base UI primitives — treat them as generated code,
   not hand-tuned application logic.
-- To add a primitive, run `npx shadcn@latest add <name>` (the CLI is deliberately **not** a
-  dependency — it pulls ~170 packages to supply a stylesheet). If the new component styles itself
-  off a Base UI data attribute, copy the matching `@custom-variant` into `src/index.css`; the four
-  in use are listed there. A missing variant compiles to nothing silently, so check the component
-  actually animates rather than trusting a green build.
+- To add a primitive, run `npx shadcn@latest add <name>`. The CLI is deliberately **not** a
+  dependency: installing it to import one stylesheet cost 224 packages, so the handful of
+  Base UI variants that stylesheet provided are inlined in `src/index.css` instead. If the new
+  component styles itself off a Base UI data attribute, copy the matching `@custom-variant`
+  across; the four in use are listed there. A missing one compiles to nothing silently, so
+  check the component actually animates rather than trusting a green build.
 - Run `npm run lint && npm run check && npm test` before pushing; CI runs the same, plus the PWA check.
 
 ## License
