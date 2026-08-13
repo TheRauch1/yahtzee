@@ -7,7 +7,7 @@
 		<title>Yahtzee Scoreboard</title>
 
 		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-		<meta name="theme-color" content="#0b1220" />
+		<meta name="theme-color" content="#0a0a0a" />
 
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -19,12 +19,15 @@
 		     the wrong palette for a frame. -->
 		<script>
 			// Dark is the default: anything that is not exactly 'light' yields dark.
+			// These hex values are oklch(1 0 0) and oklch(0.145 0 0) — the
+			// --background tokens for :root and .dark in src/index.css — converted
+			// to sRGB. Keep in sync with THEME_COLORS in src/lib/theme-store.ts.
 			try {
 				var isLight = localStorage.getItem('yahtzee:theme') === 'light';
 				document.documentElement.classList.toggle('dark', !isLight);
 				document
 					.querySelector('meta[name="theme-color"]')
-					.setAttribute('content', isLight ? '#f8fafc' : '#0b1220');
+					.setAttribute('content', isLight ? '#ffffff' : '#0a0a0a');
 			} catch (e) {
 				document.documentElement.classList.add('dark');
 			}

@@ -38,8 +38,8 @@ export default defineConfig({
 							scope: '/',
 							display: 'standalone',
 							orientation: 'portrait-primary',
-							background_color: '#0b1220',
-							theme_color: '#0b1220',
+							background_color: '#0a0a0a',
+							theme_color: '#0a0a0a',
 							categories: ['games', 'utilities'],
 							icons: [
 								{

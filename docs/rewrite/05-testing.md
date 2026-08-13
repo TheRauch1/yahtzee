@@ -163,10 +163,9 @@ dies with the markup.**
 Port the assertions using role and label queries — `getByRole('button', { name })`,
 `getByRole('dialog')`, `getByLabelText(...)` — so the suite survives the next restyle.
 
-Two API differences from `vitest-browser-svelte`:
-
-- `vitest-browser-react`'s `render()` is **synchronous**. Drop the `await` on `render(...)`.
-- Drop `await tick()` in favour of `await expect.element(...)` assertions.
+One API difference from `vitest-browser-svelte`: drop `await tick()` in favour of
+`await expect.element(...)` assertions, which poll until the DOM settles. `render(...)` is
+still async — keep the `await`.
 
 ---
 
