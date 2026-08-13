@@ -22,6 +22,7 @@ export function AddPlayerForm({ onAdd }: AddPlayerFormProps) {
 	return (
 		<form onSubmit={submit} className="flex gap-2">
 			<Input
+				type="text"
 				value={name}
 				onChange={(event) => setName(event.target.value)}
 				placeholder={t.addPlayerForm.playerNamePlaceholder}

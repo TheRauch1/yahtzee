@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 
-const ROOT = '.svelte-kit/cloudflare';
+const ROOT = 'dist';
 const TYPES = {
 	'.html': 'text/html',
 	'.js': 'text/javascript',
@@ -35,7 +35,13 @@ const server = createServer(async (req, res) => {
 await new Promise((resolve) => server.listen(4173, resolve));
 const origin = 'http://localhost:4173';
 
-const browser = await chromium.launch();
+// Same escape hatch as vite.config.ts: a machine with a Chromium already
+// installed but not the exact build Playwright asks for (offline, or a
+// locked-down egress policy) can point this at the existing binary.
+const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+const browser = await chromium.launch(
+	chromiumExecutable ? { executablePath: chromiumExecutable } : {}
+);
 const context = await browser.newContext();
 const page = await context.newPage();
 
@@ -83,20 +89,26 @@ const swState = await page.evaluate(async () => {
 });
 check('service worker activated', swState === 'activated', swState);
 
-// 4. The precache actually populated (this is what the addAll() dedupe bug broke)
+// 4. The precache actually populated. Workbox names its cache
+// `workbox-precache-v2-<origin>`, not a single fixed key, so find it by
+// prefix rather than assuming it is the only (or first) cache.
 const cacheInfo = await page.evaluate(async () => {
 	const keys = await caches.keys();
-	if (!keys.length) return { keys, count: 0 };
-	const cache = await caches.open(keys[0]);
+	const precacheKey = keys.find((key) => key.includes('workbox-precache'));
+	if (!precacheKey) return { keys, count: 0 };
+	const cache = await caches.open(precacheKey);
 	const reqs = await cache.keys();
-	return { keys, count: reqs.length, urls: reqs.map((r) => new URL(r.url).pathname) };
+	return { keys, precacheKey, count: reqs.length, urls: reqs.map((r) => new URL(r.url).pathname) };
 });
 check(
 	'precache populated',
 	cacheInfo.count > 0,
-	`${cacheInfo.count} entries in ${cacheInfo.keys[0]}`
+	`${cacheInfo.count} entries in ${cacheInfo.precacheKey}`
 );
-check('app shell precached', !!cacheInfo.urls?.includes('/'), '/');
+// Workbox precaches /index.html directly rather than the bare '/' the old
+// hand-written service worker used; navigateFallback (checked below) is what
+// makes a request for '/' itself work offline.
+check('app shell precached', !!cacheInfo.urls?.includes('/index.html'), '/index.html');
 
 // 5. The real test: go offline and reload
 await context.setOffline(true);
@@ -105,7 +117,17 @@ await page.reload({ waitUntil: 'load' });
 const offlineHeading = await page.textContent('h1').catch(() => null);
 check('app renders offline after reload', offlineHeading === 'Yahtzee Scoreboard', offlineHeading);
 
-// 6. And is still interactive offline
+// 6. Navigating to '/' itself (not just '/index.html') still works offline,
+// via Workbox's navigateFallback rather than a precached literal '/' entry.
+await page.goto(origin + '/', { waitUntil: 'load' }).catch(() => null);
+const rootHeading = await page.textContent('h1').catch(() => null);
+check(
+	'navigating to / works offline via navigateFallback',
+	rootHeading === 'Yahtzee Scoreboard',
+	rootHeading
+);
+
+// 7. And is still interactive offline
 await page.fill('input[type="text"]', 'Offline Player');
 await page.click('button[type="submit"]');
 const playerVisible = await page
@@ -114,7 +136,7 @@ const playerVisible = await page
 	.catch(() => 0);
 check('can add a player while offline', playerVisible > 0);
 
-// 7. State survives a reload (still offline)
+// 8. State survives a reload (still offline)
 await page.reload({ waitUntil: 'load' });
 const persisted = await page.locator('th', { hasText: 'Offline Player' }).count();
 check('game state persists across reload', persisted > 0);
