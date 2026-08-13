@@ -31,7 +31,6 @@ export interface Translation {
 		bonus: (threshold: number) => string;
 		lowerTotal: string;
 		grandTotal: string;
-		clickToScore: string;
 		removePlayer: (name: string) => string;
 		scoreFor: (category: string, player: string) => string;
 		confirmResetTitle: string;
@@ -113,7 +112,6 @@ export const translations: Record<Locale, Translation> = {
 			bonus: (threshold) => `Bonus (${threshold}+ pts)`,
 			lowerTotal: 'Lower Total',
 			grandTotal: 'Grand Total',
-			clickToScore: 'Click to score',
 			removePlayer: (name) => `Remove ${name}`,
 			scoreFor: (category, player) => `Score ${category} for ${player}`,
 			confirmResetTitle: 'Reset the scoreboard?',
@@ -196,7 +194,6 @@ export const translations: Record<Locale, Translation> = {
 			bonus: (threshold) => `Bonus (${threshold}+ Punkte)`,
 			lowerTotal: 'Untere Summe',
 			grandTotal: 'Gesamtsumme',
-			clickToScore: 'Zum Werten klicken',
 			removePlayer: (name) => `${name} entfernen`,
 			scoreFor: (category, player) => `${category} für ${player} werten`,
 			confirmResetTitle: 'Punktetafel zurücksetzen?',
