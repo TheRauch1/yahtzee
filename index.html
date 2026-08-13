@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="description" content="A local-first Yahtzee scorekeeper that works offline." />
+		<title>Yahtzee Scoreboard</title>
+
+		<link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+		<meta name="theme-color" content="#0b1220" />
+
+		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Yahtzee" />
+
+		<!-- Classic and blocking, so it runs before first paint. Must NOT become
+		     type="module" — module scripts are deferred and the page would paint
+		     the wrong palette for a frame. -->
+		<script>
+			// Dark is the default: anything that is not exactly 'light' yields dark.
+			try {
+				var isLight = localStorage.getItem('yahtzee:theme') === 'light';
+				document.documentElement.classList.toggle('dark', !isLight);
+				document
+					.querySelector('meta[name="theme-color"]')
+					.setAttribute('content', isLight ? '#f8fafc' : '#0b1220');
+			} catch (e) {
+				document.documentElement.classList.add('dark');
+			}
+
+			// Tag the document with the saved language before first paint, so
+			// assistive tech does not read German content as English.
+			// Keep this list in sync with LOCALES in src/lib/translations.ts.
+			try {
+				var savedLocale = localStorage.getItem('yahtzee:locale');
+				if (['en', 'de'].indexOf(savedLocale) !== -1) {
+					document.documentElement.lang = savedLocale;
+				}
+			} catch (e) {
+				// No stored preference reachable; the shipped lang="en" stands.
+			}
+		</script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
+	</body>
+</html>

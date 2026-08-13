@@ -1,11 +1,11 @@
-import prettier from 'eslint-config-prettier';
-import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
-import svelte from 'eslint-plugin-svelte';
+import { includeIgnoreFile } from '@eslint/compat';
+import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
@@ -13,28 +13,26 @@ export default ts.config(
 	includeIgnoreFile(gitignorePath),
 	js.configs.recommended,
 	...ts.configs.recommended,
-	...svelte.configs.recommended,
+	reactRefresh.configs.vite,
 	prettier,
-	...svelte.configs.prettier,
+	{
+		plugins: { 'react-hooks': reactHooks },
+		rules: { ...reactHooks.configs.recommended.rules }
+	},
 	{
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }
 		},
 		rules: {
-			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
-			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
+			// typescript-eslint strongly recommend that you do not use the no-undef rule
+			// on TypeScript projects: https://typescript-eslint.io/troubleshooting/faqs/eslint/
 			'no-undef': 'off'
 		}
 	},
 	{
-		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				extraFileExtensions: ['.svelte'],
-				parser: ts.parser,
-				svelteConfig
-			}
-		}
+		// shadcn primitives pair a component with its cva() variants export in the
+		// same file by convention; that's not a fast-refresh boundary violation.
+		files: ['src/components/ui/**/*.tsx'],
+		rules: { 'react-refresh/only-export-components': 'off' }
 	}
 );
