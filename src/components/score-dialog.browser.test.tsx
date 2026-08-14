@@ -99,6 +99,32 @@ describe('ScoreDialog', () => {
 		expect(document.body.textContent).not.toContain('more dice to select');
 	});
 
+	// Guards the close-flicker fix in ui/dialog.tsx. Base UI holds the whole
+	// portal subtree until the slowest animation in it ends, so if the backdrop
+	// and the popup do not exit over the same duration — and hold their last
+	// frame once done — the one that finishes first reverts to its unanimated
+	// style in full view. For the backdrop that meant a black flash.
+	//
+	// Asserted on the class list rather than on computed style because browser
+	// tests run without the stylesheet; there is no animation here to observe.
+	// That still pins the regression that matters, which is someone re-running
+	// `npx shadcn@latest add dialog` and overwriting these two utilities.
+	it('exits the backdrop and the popup on the same schedule', async () => {
+		await open('yahtzee');
+
+		const backdrop = document.querySelector('[data-slot="dialog-overlay"]');
+		const popup = document.querySelector('[data-slot="dialog-content"]');
+
+		for (const [name, el] of [
+			['backdrop', backdrop],
+			['popup', popup]
+		] as const) {
+			expect(el, name).not.toBeNull();
+			expect(el!.className, `${name} exit duration`).toContain('duration-200');
+			expect(el!.className, `${name} exit fill mode`).toContain('data-closed:fill-mode-forwards');
+		}
+	});
+
 	it('offers 0 to 5 dice for an upper category and scores by face value', async () => {
 		const { onScore } = await open('fives');
 		const options = q('.space-y-3 > button');

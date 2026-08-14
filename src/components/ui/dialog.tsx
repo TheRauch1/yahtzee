@@ -20,12 +20,23 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 	return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
+// `duration-200` and `data-closed:fill-mode-forwards` are additions to the
+// stock shadcn markup, and both are needed here. Base UI keeps the entire
+// portal subtree mounted until the *slowest* animation in it finishes, so an
+// element whose animation ends early stays on screen afterwards — and with the
+// default `animation-fill-mode: none` it reverts to its unanimated style the
+// moment it ends. The backdrop had no duration utility, so it took
+// tw-animate-css's 0.15s default against the popup's 0.2s, finished 50ms early
+// and snapped back to full `bg-black/50` for the rest of the close: a black
+// flash right as the dialog disappeared. The duration syncs the two, and the
+// fill mode holds the last frame so the revert cannot happen even for the
+// frame between `animationend` and React unmounting the tree.
 function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
 	return (
 		<DialogPrimitive.Backdrop
 			data-slot="dialog-overlay"
 			className={cn(
-				'fixed inset-0 z-50 bg-black/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+				'fixed inset-0 z-50 bg-black/50 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards',
 				className
 			)}
 			{...props}
@@ -45,7 +56,7 @@ function DialogContent({
 			<DialogPrimitive.Popup
 				data-slot="dialog-content"
 				className={cn(
-					'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+					'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards data-closed:zoom-out-95',
 					className
 				)}
 				{...props}
