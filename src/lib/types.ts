@@ -21,11 +21,6 @@ export interface Player {
 	scores: Record<ScoringCategory, number | null>;
 }
 
-export interface DiceRoll {
-	dice: number[];
-	kept: boolean[];
-}
-
 export const UPPER_CATEGORIES: ScoringCategory[] = [
 	'ones',
 	'twos',

@@ -1,7 +1,8 @@
 # Yahtzee
 
-A local-first Yahtzee **scorekeeper**, built with SvelteKit, Svelte 5 and Tailwind CSS 4.
-You roll real dice; this keeps the scorecard. Works offline and installs to your home screen.
+A local-first Yahtzee **scorekeeper**, built with Vite, React 19 and shadcn/ui (on Base UI)
+with Tailwind CSS 4. You roll real dice; this keeps the scorecard. Works offline and installs
+to your home screen.
 
 There is no dice rolling and no computer opponent — it is the paper score sheet, digitised.
 
@@ -9,12 +10,13 @@ There is no dice rolling and no computer opponent — it is the paper score shee
 
 - Full score sheet: Ones → Sixes, Pair, Two Pairs, 3/4 of a Kind, Full House, Small/Large Straight, Yahtzee, Chance
 - Multiple players side by side, added and removed as you go
-- A dice-picker modal per category, so you tap what you rolled instead of doing mental arithmetic
+- A dice-picker dialog per category, so you tap what you rolled instead of doing mental arithmetic
 - Automatic upper total, bonus, lower total and grand total
 - Games persist to `localStorage` — closing the tab does not lose the sheet
 - Light and dark themes, dark by default
 - English and German, switchable in the header and remembered across reloads
 - Installable PWA that works with no network at all
+- Confirmation prompts on the two destructive actions — Reset and removing a player
 
 ## House rules
 
@@ -35,7 +37,9 @@ respectively) rather than being entered individually — that keeps scoring to a
 
 ## Quick start
 
-Requires Node.js 22+.
+Requires Node.js 22+ — `package.json` enforces it (`.npmrc` sets `engine-strict=true`, so an
+older Node fails at install rather than at runtime), and `.node-version` pins it for CI and
+hosts that read it.
 
 ```bash
 npm install
@@ -49,52 +53,74 @@ Then open the address Vite prints (usually http://localhost:5173).
 | Script              | What it does                                             |
 | ------------------- | -------------------------------------------------------- |
 | `npm run dev`       | Dev server with hot reload                               |
-| `npm run build`     | Production build                                         |
+| `npm run build`     | Type-check, then production build                        |
 | `npm run preview`   | Serve the production build locally                       |
 | `npm test`          | Run all tests once                                       |
 | `npm run test:unit` | Tests in watch mode                                      |
 | `npm run test:pwa`  | Build check: manifest, service worker and offline reload |
-| `npm run check`     | `svelte-check` type checking                             |
+| `npm run check`     | `tsc -b --noEmit` type checking                          |
 | `npm run lint`      | Prettier + ESLint                                        |
 | `npm run format`    | Rewrite files with Prettier                              |
 
 ## Project structure
 
 ```
+index.html                       document shell, PWA tags, no-flash theme + lang script
 src/
-  app.css                    theme variables + Tailwind setup
-  app.html                   document shell, PWA tags, no-flash theme + lang script
-  service-worker.ts          precaches the app for offline use
+  main.tsx                       React root, service worker registration
+  App.tsx                        renders <Scoreboard />
+  index.css                      shadcn/Tailwind tokens + theme setup
   lib/
-    scoring.ts               all scoring maths (pure, unit-tested)
-    gameStore.svelte.ts      players, scores and localStorage persistence
-    theme.svelte.ts          light/dark preference
-    translations.ts          English and German strings
-    locale.svelte.ts         language preference
-    Scoreboard.svelte        the score table
-    ScoreModal.svelte        per-category dice picker
-    DiceFace.svelte          a single die
-    AddPlayerForm.svelte     player name input
-    LanguageSwitcher.svelte  English/German dropdown
-  routes/
-    +layout.ts               prerender = true
-    +layout.svelte           global styles
-    +page.svelte             renders the scoreboard
-static/
-  manifest.webmanifest       PWA manifest
-  icons/                     app icons (SVG sources + generated PNGs)
+    scoring.ts                   all scoring maths (pure, unit-tested)
+    types.ts                     ScoringCategory, Player and category groupings
+    translations.ts              English and German strings
+    game-store.ts                players, scores and localStorage persistence
+    theme-store.ts               light/dark preference
+    locale-store.ts              language preference
+    utils.ts                     cn() class-name helper
+  hooks/
+    use-game.ts                  usePlayers, usePlayer
+    use-theme.ts                 useTheme
+    use-locale.ts                useLocale, useTranslation
+  components/
+    scoreboard.tsx                page: header, players card, score table
+    score-table.tsx               the score sheet
+    score-cell.tsx                a single score button
+    score-dialog.tsx              the per-category picker (dialog shell)
+    score-picker.tsx              the nine category panels
+    dice-face.tsx                 a single die
+    add-player-form.tsx           player name input
+    player-chips.tsx              player list with remove (with confirmation)
+    language-switcher.tsx         English/German select
+    theme-toggle.tsx              light/dark icon button
+    confirm-dialog.tsx            reusable "are you sure?" wrapper
+    ui/                           shadcn-generated primitives (Base UI), do not hand-edit
+  test/
+    setup-node.ts                 localStorage polyfill for the node project
+    setup-browser.ts              store reset + cleanup between browser tests
+public/                          copied to dist/ verbatim
+  icons/                          app icons (SVG sources + generated PNGs)
+  robots.txt
+scripts/
+  verify-pwa.mjs                  offline/manifest/service-worker check (npm run test:pwa)
 ```
+
+The PWA manifest is not a file here — `vite-plugin-pwa` generates `dist/manifest.webmanifest`
+from the `manifest` option in `vite.config.ts`, which is its single source of truth.
 
 ## Testing
 
 Two Vitest projects run from one config:
 
-- **server** — pure logic in Node (`src/**/*.test.ts`)
-- **client** — components in real Chromium via `vitest-browser-svelte` (`src/**/*.svelte.test.ts`)
+- **unit** — pure logic in Node (`src/**/*.test.{ts,tsx}`, minus the browser tests below)
+- **browser** — components in real Chromium via `vitest-browser-react` (`src/**/*.browser.test.tsx`)
+
+Browser tests run without the stylesheet, so they cover behaviour and the DOM, not appearance:
+anything that depends on a CSS animation having run cannot be asserted there.
 
 ```bash
 npm test                  # both projects
-npx vitest --project client
+npx vitest --project browser
 ```
 
 Browser tests need Chromium once: `npx playwright install chromium`.
@@ -106,15 +132,15 @@ If a machine already has a Chromium but cannot download the exact build Playwrig
 PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome npm test
 ```
 
-`npm run test:pwa` is separate because it runs against a real build: it serves `.svelte-kit/cloudflare`,
+`npm run test:pwa` is separate because it runs against a real build: it serves `dist/`,
 registers the service worker, drops the network, reloads, and asserts the app still works.
-Run `npm run build` first.
+Run `npm run build` first. It respects the same `PLAYWRIGHT_CHROMIUM_EXECUTABLE` override.
 
 ## PWA
 
-The app is fully prerendered, so the service worker can precache every asset and serve the
-whole thing offline. SvelteKit registers `src/service-worker.ts` automatically in production
-builds — there is no registration code to maintain.
+`vite-plugin-pwa` (Workbox `generateSW` mode) precaches every build asset, so the service
+worker can serve the whole app offline. Registration happens explicitly in `src/main.tsx` via
+`registerSW()` — there is no separate registration step to maintain.
 
 To try it locally:
 
@@ -125,19 +151,32 @@ npm run build && npm run preview
 Then in DevTools → Application, check **Manifest** and **Service Workers**, tick
 **Network → Offline**, and reload. The scoreboard should keep working.
 
-Icons live in `static/icons/`. The `.svg` files are the sources; the `.png` files are generated
+Icons live in `public/icons/`. The `.svg` files are the sources; the `.png` files are generated
 from them and committed, so no image tooling is needed to build the app.
 
 ## Deployment
 
-Built with `@sveltejs/adapter-cloudflare`. Because every route is prerendered, the output in
-`.svelte-kit/cloudflare` is a set of static assets served from Cloudflare's edge; the worker is
-never invoked for page requests.
+The build output in `dist/` is a set of static assets — no server-side rendering, no API,
+nothing to run at request time. Point any static host (Cloudflare Pages, Netlify, GitHub
+Pages, S3 + CDN, ...) at `dist/` after `npm run build`.
+
+This repo holds no host configuration: the Cloudflare Pages project is wired up in the
+Cloudflare dashboard, so its build command and **output directory (`dist`)** are set there,
+not here. A host that reads `.node-version` will pick up Node 22 from it; one that does not
+needs its Node version set alongside the output directory, or `npm ci` fails the engine check.
 
 ## Contributing notes
 
 - `src/lib/scoring.ts` is the only place scoring maths should live. Keep it pure and add a test.
 - If you change the house rules, update `scoring.test.ts` and the table above in the same commit.
+- Files under `src/components/ui/` are shadcn/Base UI primitives — treat them as generated code,
+  not hand-tuned application logic.
+- To add a primitive, run `npx shadcn@latest add <name>`. The CLI is deliberately **not** a
+  dependency: installing it to import one stylesheet cost 224 packages, so the handful of
+  Base UI variants that stylesheet provided are inlined in `src/index.css` instead. If the new
+  component styles itself off a Base UI data attribute, copy the matching `@custom-variant`
+  across; the four in use are listed there. A missing one compiles to nothing silently, so
+  check the component actually animates rather than trusting a green build.
 - Run `npm run lint && npm run check && npm test` before pushing; CI runs the same, plus the PWA check.
 
 ## License

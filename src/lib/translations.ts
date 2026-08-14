@@ -10,10 +10,13 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 	de: 'Deutsch'
 };
 
-interface Translation {
+export interface Translation {
 	categories: Record<ScoringCategory, string>;
 	language: {
 		switchLabel: string;
+	};
+	common: {
+		cancel: string;
 	};
 	scoreboard: {
 		title: string;
@@ -28,9 +31,14 @@ interface Translation {
 		bonus: (threshold: number) => string;
 		lowerTotal: string;
 		grandTotal: string;
-		clickToScore: string;
 		removePlayer: (name: string) => string;
 		scoreFor: (category: string, player: string) => string;
+		confirmResetTitle: string;
+		confirmResetBody: string;
+		confirmResetConfirm: string;
+		confirmRemoveTitle: (name: string) => string;
+		confirmRemoveBody: string;
+		confirmRemoveConfirm: string;
 	};
 	addPlayerForm: {
 		playerNamePlaceholder: string;
@@ -88,6 +96,9 @@ export const translations: Record<Locale, Translation> = {
 		language: {
 			switchLabel: 'Language'
 		},
+		common: {
+			cancel: 'Cancel'
+		},
 		scoreboard: {
 			title: 'Yahtzee Scoreboard',
 			subtitle: 'Keep score, add players, and switch between light and dark themes.',
@@ -101,9 +112,14 @@ export const translations: Record<Locale, Translation> = {
 			bonus: (threshold) => `Bonus (${threshold}+ pts)`,
 			lowerTotal: 'Lower Total',
 			grandTotal: 'Grand Total',
-			clickToScore: 'Click to score',
 			removePlayer: (name) => `Remove ${name}`,
-			scoreFor: (category, player) => `Score ${category} for ${player}`
+			scoreFor: (category, player) => `Score ${category} for ${player}`,
+			confirmResetTitle: 'Reset the scoreboard?',
+			confirmResetBody: 'This removes all players and their scores. This cannot be undone.',
+			confirmResetConfirm: 'Reset',
+			confirmRemoveTitle: (name) => `Remove ${name}?`,
+			confirmRemoveBody: 'Their column and all their scores will be deleted.',
+			confirmRemoveConfirm: 'Remove'
 		},
 		addPlayerForm: {
 			playerNamePlaceholder: 'Player name',
@@ -134,7 +150,7 @@ export const translations: Record<Locale, Translation> = {
 			clearAll: 'Clear All',
 			removeDie: (value) => `Remove die showing ${value}`,
 			totalScore: 'Total Score:',
-			moreDiceToSelect: (count) => `${count} more dice to select`,
+			moreDiceToSelect: (count) => `${count} more ${count === 1 ? 'die' : 'dice'} to select`,
 			scoreZero: 'Score 0',
 			eraseScore: 'Erase score',
 			cancel: 'Cancel'
@@ -161,6 +177,9 @@ export const translations: Record<Locale, Translation> = {
 		language: {
 			switchLabel: 'Sprache'
 		},
+		common: {
+			cancel: 'Abbrechen'
+		},
 		scoreboard: {
 			title: 'Yahtzee-Punktetafel',
 			subtitle:
@@ -175,9 +194,15 @@ export const translations: Record<Locale, Translation> = {
 			bonus: (threshold) => `Bonus (${threshold}+ Punkte)`,
 			lowerTotal: 'Untere Summe',
 			grandTotal: 'Gesamtsumme',
-			clickToScore: 'Zum Werten klicken',
 			removePlayer: (name) => `${name} entfernen`,
-			scoreFor: (category, player) => `${category} für ${player} werten`
+			scoreFor: (category, player) => `${category} für ${player} werten`,
+			confirmResetTitle: 'Punktetafel zurücksetzen?',
+			confirmResetBody:
+				'Dadurch werden alle Spieler und ihre Punkte entfernt. Das kann nicht rückgängig gemacht werden.',
+			confirmResetConfirm: 'Zurücksetzen',
+			confirmRemoveTitle: (name) => `${name} entfernen?`,
+			confirmRemoveBody: 'Die Spalte und alle Punkte werden gelöscht.',
+			confirmRemoveConfirm: 'Entfernen'
 		},
 		addPlayerForm: {
 			playerNamePlaceholder: 'Spielername',
