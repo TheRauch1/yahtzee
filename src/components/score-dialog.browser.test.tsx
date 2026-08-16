@@ -71,32 +71,54 @@ describe('ScoreDialog', () => {
 		expect(onClose).toHaveBeenCalled();
 	});
 
-	// Pins the reset that the `key` and the popup's unmount exist to give. The
-	// picker now outlives `selected` by design, so that it animates out with
-	// content in it rather than as an empty box — this is the guard that the
-	// surviving copy never rides along into the next open of the same cell.
+	// Pins the reset that the per-open `key` exists to give. The picker now
+	// outlives `selected` by design, so that it animates out with content in it
+	// rather than as an empty box — this is the guard that the surviving copy
+	// never rides along into the next open of the same cell.
 	//
-	// Note it does not pin the flicker fix itself: browser tests run without the
-	// stylesheet, so there is no exit animation, and the popup unmounts at once.
-	// The no-blank-box behaviour was verified by sampling frames in a real browser.
+	// Browser tests run without the stylesheet, so the exit animation the real
+	// app has is injected here rather than left out. Without one the popup
+	// unmounts on whatever tick the runtime gets to it, and whether the reopen
+	// lands on a surviving copy — the case this is about — becomes a race the
+	// test loses every so often. Note this still does not pin the flicker fix
+	// itself; the no-blank-box behaviour was verified by sampling frames in a
+	// real browser.
 	it('does not carry picker state into a reopen of the same cell', async () => {
-		const selected: ScoreDialogSelection = { category: 'chance', playerId: 'p1' };
-		const props = { current: null, onScore: vi.fn(), onErase: vi.fn(), onClose: vi.fn() };
+		const exitAnimation = document.createElement('style');
+		exitAnimation.textContent = `
+			@keyframes score-dialog-test-exit { to { opacity: 0 } }
+			[data-slot='dialog-content'][data-closed],
+			[data-slot='dialog-overlay'][data-closed] {
+				animation: score-dialog-test-exit 300ms forwards;
+			}
+		`;
+		document.head.append(exitAnimation);
 
-		const rendered = await render(<ScoreDialog selected={selected} {...props} />);
-		await expect.element(page.getByRole('dialog')).toBeVisible();
+		try {
+			const selected: ScoreDialogSelection = { category: 'chance', playerId: 'p1' };
+			const props = { current: null, onScore: vi.fn(), onErase: vi.fn(), onClose: vi.fn() };
 
-		const dice = q('.grid-cols-3 > button');
-		await click(dice[0]);
-		await click(dice[1]);
-		expect(document.body.textContent).toContain('more dice to select');
+			const rendered = await render(<ScoreDialog selected={selected} {...props} />);
+			await expect.element(page.getByRole('dialog')).toBeVisible();
 
-		// Close, then reopen the very same player + category.
-		await rendered.rerender(<ScoreDialog selected={null} {...props} />);
-		await rendered.rerender(<ScoreDialog selected={selected} {...props} />);
-		await expect.element(page.getByRole('dialog')).toBeVisible();
+			const dice = q('.grid-cols-3 > button');
+			await click(dice[0]);
+			await click(dice[1]);
+			expect(document.body.textContent).toContain('more dice to select');
 
-		expect(document.body.textContent).not.toContain('more dice to select');
+			// Closing leaves the picker on screen with the picks still in it: that
+			// is the copy the reopen below must not be handed.
+			await rendered.rerender(<ScoreDialog selected={null} {...props} />);
+			expect(document.body.textContent, 'picker mid-exit').toContain('more dice to select');
+
+			// Reopen the very same player + category, mid-exit.
+			await rendered.rerender(<ScoreDialog selected={selected} {...props} />);
+			await expect.element(page.getByRole('dialog')).toBeVisible();
+
+			expect(document.body.textContent).not.toContain('more dice to select');
+		} finally {
+			exitAnimation.remove();
+		}
 	});
 
 	// Guards the close-flicker fix in ui/dialog.tsx. Base UI holds the whole
