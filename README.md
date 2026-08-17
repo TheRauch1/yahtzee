@@ -83,9 +83,11 @@ src/
     setup-browser.ts              store reset + cleanup between browser tests
 public/                          copied to dist/ verbatim
   icons/                          app icons (SVG sources + generated PNGs)
+  _headers                        Cloudflare Pages cache policy
+  service-worker.js               tombstone for the Svelte-era worker, see PWA below
   robots.txt
 scripts/
-  verify-pwa.mjs                  offline/manifest/service-worker check (npm run test:pwa)
+  verify-pwa.mjs                  offline/manifest/migration checks (npm run test:pwa)
 ```
 
 The PWA manifest is not a file here — `vite-plugin-pwa` generates `dist/manifest.webmanifest`
@@ -116,8 +118,10 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome npm test
 ```
 
 `npm run test:pwa` is separate because it runs against a real build: it serves `dist/`,
-registers the service worker, drops the network, reloads, and asserts the app still works.
-Run `npm run build` first. It respects the same `PLAYWRIGHT_CHROMIUM_EXECUTABLE` override.
+registers the service worker, drops the network, reloads, and asserts the app still works. It
+then replays the Svelte-to-React migration against a browser holding the old worker, which is
+the one thing no unit test can cover. Run `npm run build` first. It respects the same
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` override.
 
 ## PWA
 
@@ -137,16 +141,42 @@ Then in DevTools → Application, check **Manifest** and **Service Workers**, ti
 Icons live in `public/icons/`. The `.svg` files are the sources; the `.png` files are generated
 from them and committed, so no image tooling is needed to build the app.
 
+### Never move the service worker's URL
+
+`public/service-worker.js` is a tombstone, not a service worker. It exists because the Svelte
+build shipped a real one at that URL, and moving to Workbox's `/sw.js` stranded every browser
+that had installed it: the old worker answered navigations from its own cache, so those
+browsers kept serving the Svelte app and never fetched an `index.html` that would have
+registered the new worker. A browser only re-checks the script URL it originally registered,
+and a failed update check — a 404, or the `index.html` Cloudflare Pages returns for an
+unmatched path — leaves the old worker installed rather than removing it. Nothing shipped
+inside the app can reach those browsers.
+
+The tombstone is what reaches them: it is served at the old URL, claims the old worker's
+clients, unregisters itself, deletes every cache and reloads the page, which then comes from
+the network. `npm run test:pwa` replays that whole migration, including the failure it fixes.
+
+Two rules follow. Keep `public/service-worker.js` deployed indefinitely — a browser that has
+not opened the site since the Svelte build is still waiting for it, and desktop browsers never
+expire a registration on their own. And if the Workbox filename ever changes again, leave a
+tombstone at the outgoing URL in the same release, or repeat this outage.
+
 ## Deployment
 
 The build output in `dist/` is a set of static assets — no server-side rendering, no API,
 nothing to run at request time. Point any static host (Cloudflare Pages, Netlify, GitHub
 Pages, S3 + CDN, ...) at `dist/` after `npm run build`.
 
-This repo holds no host configuration: the Cloudflare Pages project is wired up in the
-Cloudflare dashboard, so its build command and **output directory (`dist`)** are set there,
-not here. A host that reads `.node-version` will pick up Node 22 from it; one that does not
-needs its Node version set alongside the output directory, or `npm ci` fails the engine check.
+`public/_headers` is the one piece of host configuration in the repo, and Cloudflare Pages is
+the host that reads it. The rule it encodes: files that decide _which build you get_ —
+`index.html`, the manifest, both service worker URLs — must never be served from a cache,
+while `/assets/*` names its own content in the filename and can be cached forever. Other hosts
+ignore the file and need the same policy expressed their own way.
+
+The rest of the Cloudflare Pages project is wired up in the Cloudflare dashboard, so its build
+command and **output directory (`dist`)** are set there, not here. A host that reads
+`.node-version` will pick up Node 22 from it; one that does not needs its Node version set
+alongside the output directory, or `npm ci` fails the engine check.
 
 ## Contributing notes
 

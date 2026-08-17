@@ -65,6 +65,11 @@ export default defineConfig({
 						},
 						workbox: {
 							globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,txt}'],
+							// public/service-worker.js is a tombstone for the SvelteKit
+							// worker that used to own that URL — see the file itself. Only
+							// the browser's own update check ever fetches it, and that
+							// bypasses this worker, so precaching it would be dead weight.
+							globIgnores: ['service-worker.js'],
 							// Replaces the hand-written "app shell for navigations" branch.
 							navigateFallback: '/index.html',
 							cleanupOutdatedCaches: true,
