@@ -1,0 +1,31 @@
+# Cache policy for Cloudflare Pages, which reads this file from the root of the
+# deployment — Vite copies everything in public/ there verbatim. Rules here
+# override the headers Pages would otherwise send.
+#
+# The shape of it: nothing that decides *which build you get* may be cached,
+# everything whose URL already names its content is cached forever.
+
+# The two files that decide which build a browser runs. A stale service worker
+# script is the one kind of staleness a browser cannot recover from on its own,
+# since it is what would have delivered the fix. The spec already bypasses the
+# HTTP cache for the top-level script; the edge is a separate cache.
+/sw.js
+  Cache-Control: no-store
+
+/service-worker.js
+  Cache-Control: no-store
+
+# The entry point names the hashed bundles, so a stale copy pins the whole app
+# to an old build. no-cache still allows a 304 — it forbids using it unasked.
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Hashed filenames: a new build means a new URL, so these never go stale.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
