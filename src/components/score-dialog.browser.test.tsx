@@ -101,21 +101,25 @@ describe('ScoreDialog', () => {
 			const rendered = await render(<ScoreDialog selected={selected} {...props} />);
 			await expect.element(page.getByRole('dialog')).toBeVisible();
 
+			// The remaining-dice count is what distinguishes a picker with state in it
+			// from a fresh one: the summary block itself is always on screen, empty or
+			// not, so its mere presence says nothing about which copy this is.
 			const dice = q('.grid-cols-3 > button');
 			await click(dice[0]);
 			await click(dice[1]);
-			expect(document.body.textContent).toContain('more dice to select');
+			expect(document.body.textContent).toContain('3 more dice to select');
 
 			// Closing leaves the picker on screen with the picks still in it: that
 			// is the copy the reopen below must not be handed.
 			await rendered.rerender(<ScoreDialog selected={null} {...props} />);
-			expect(document.body.textContent, 'picker mid-exit').toContain('more dice to select');
+			expect(document.body.textContent, 'picker mid-exit').toContain('3 more dice to select');
 
 			// Reopen the very same player + category, mid-exit.
 			await rendered.rerender(<ScoreDialog selected={selected} {...props} />);
 			await expect.element(page.getByRole('dialog')).toBeVisible();
 
-			expect(document.body.textContent).not.toContain('more dice to select');
+			expect(document.body.textContent).not.toContain('3 more dice to select');
+			expect(document.body.textContent).toContain('5 more dice to select');
 		} finally {
 			exitAnimation.remove();
 		}
@@ -165,25 +169,25 @@ describe('ScoreDialog', () => {
 		expect(onScore).toHaveBeenCalledWith(12);
 	});
 
-	it('applies the three-of-a-kind house rule', async () => {
+	it('scores three of a kind as three times the value', async () => {
 		const { onScore } = await open('three-of-a-kind');
 		const options = q('.space-y-3 > button');
 		expect(options).toHaveLength(7); // None + the six die values
 
 		await click(options[5]); // value 5
-		expect(onScore).toHaveBeenCalledWith(18);
+		expect(onScore).toHaveBeenCalledWith(15);
 	});
 
-	it('applies the four-of-a-kind house rule', async () => {
+	it('scores four of a kind as four times the value', async () => {
 		const { onScore } = await open('four-of-a-kind');
 		const options = q('.space-y-3 > button');
 		expect(options).toHaveLength(7);
 
 		await click(options[5]); // value 5
-		expect(onScore).toHaveBeenCalledWith(21);
+		expect(onScore).toHaveBeenCalledWith(20);
 	});
 
-	it('scratches three- and four-of-a-kind to 0, not to the house-rule remainder', async () => {
+	it('scratches three- and four-of-a-kind to 0', async () => {
 		for (const category of ['three-of-a-kind', 'four-of-a-kind'] as const) {
 			const { onScore, rendered } = await open(category);
 			const options = q('.space-y-3 > button');
@@ -253,6 +257,24 @@ describe('ScoreDialog', () => {
 	it('offers Erase for a category scratched to 0', async () => {
 		await open('yahtzee', 0);
 		await expect.element(page.getByRole('button', { name: 'Erase score' })).toBeVisible();
+	});
+
+	// The summary used to mount with the first die, which grew the popup and
+	// re-centred it mid-tap. Asserted on the DOM rather than on measured height:
+	// browser tests run without the stylesheet, so nothing here has the layout
+	// that shifted. What this pins is that there is no empty-state branch to
+	// mount into in the first place.
+	it('shows the chance summary before any die is picked', async () => {
+		await open('chance');
+
+		expect(document.body.textContent).toContain('Selected Dice:');
+		expect(document.body.textContent).toContain('No dice selected yet');
+		expect(document.body.textContent).toContain('Total Score:');
+		expect(document.body.textContent).toContain('5 more dice to select');
+
+		const clearAll = page.getByRole('button', { name: 'Clear All' });
+		await expect.element(clearAll).toBeVisible();
+		await expect.element(clearAll).toBeDisabled();
 	});
 
 	it('submits chance once five dice are picked', async () => {

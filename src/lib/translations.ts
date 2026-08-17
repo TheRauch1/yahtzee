@@ -64,6 +64,7 @@ export interface Translation {
 		clickDiceToAdd: (max: number) => string;
 		addDie: (value: number) => string;
 		selectedDice: string;
+		noDiceSelected: string;
 		clearAll: string;
 		removeDie: (value: number) => string;
 		totalScore: string;
@@ -134,10 +135,8 @@ export const translations: Record<Locale, Translation> = {
 			firstPair: 'First Pair',
 			secondPair: 'Second Pair',
 			selectOnePairPerColumn: 'Select one pair from each column to submit your score',
-			selectThreeOfAKindHint:
-				'Select the value for your three of a kind (house rule: the other two dice count as 3):',
-			selectFourOfAKindHint:
-				'Select the value for your four of a kind (house rule: the remaining die counts as 1):',
+			selectThreeOfAKindHint: 'Select the value for your three of a kind:',
+			selectFourOfAKindHint: 'Select the value for your four of a kind:',
 			selectFullHouseHint: 'Select your full house (3 of a kind + pair):',
 			selectThreeAndPair: 'Select three-of-a-kind and pair to submit your score',
 			selectSmallStraight: 'Select your small straight:',
@@ -147,6 +146,7 @@ export const translations: Record<Locale, Translation> = {
 			clickDiceToAdd: (max) => `Click dice values to add (up to ${max})`,
 			addDie: (value) => `Add a ${value}`,
 			selectedDice: 'Selected Dice:',
+			noDiceSelected: 'No dice selected yet',
 			clearAll: 'Clear All',
 			removeDie: (value) => `Remove die showing ${value}`,
 			totalScore: 'Total Score:',
@@ -217,10 +217,8 @@ export const translations: Record<Locale, Translation> = {
 			firstPair: 'Erstes Paar',
 			secondPair: 'Zweites Paar',
 			selectOnePairPerColumn: 'Wähle ein Paar aus jeder Spalte, um deine Punktzahl einzutragen',
-			selectThreeOfAKindHint:
-				'Wähle den Wert für deinen Dreierpasch (Hausregel: die anderen beiden Würfel zählen als 3):',
-			selectFourOfAKindHint:
-				'Wähle den Wert für deinen Viererpasch (Hausregel: der verbleibende Würfel zählt als 1):',
+			selectThreeOfAKindHint: 'Wähle den Wert für deinen Dreierpasch:',
+			selectFourOfAKindHint: 'Wähle den Wert für deinen Viererpasch:',
 			selectFullHouseHint: 'Wähle dein Full House (Dreierpasch + Paar):',
 			selectThreeAndPair: 'Wähle Dreierpasch und Paar, um deine Punktzahl einzutragen',
 			selectSmallStraight: 'Wähle deine kleine Strasse:',
@@ -230,6 +228,7 @@ export const translations: Record<Locale, Translation> = {
 			clickDiceToAdd: (max) => `Klicke auf Würfelwerte zum Hinzufügen (bis zu ${max})`,
 			addDie: (value) => `Eine ${value} hinzufügen`,
 			selectedDice: 'Ausgewählte Würfel:',
+			noDiceSelected: 'Noch keine Würfel ausgewählt',
 			clearAll: 'Alle löschen',
 			removeDie: (value) => `Würfel mit ${value} entfernen`,
 			totalScore: 'Gesamtpunktzahl:',
