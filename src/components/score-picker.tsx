@@ -393,19 +393,34 @@ export function ScorePicker({ category, current, onScore, onErase, onClose }: Sc
 					</div>
 				</div>
 
-				{selectedDice.length > 0 && (
-					<div className="space-y-3 border-t pt-4">
-						<div className="flex items-center justify-between">
-							<span className="text-sm font-medium text-muted-foreground">
-								{t.scoreModal.selectedDice}
-							</span>
-							<Button variant="destructive" size="sm" onClick={() => setSelectedDice([])}>
-								{t.scoreModal.clearAll}
-							</Button>
-						</div>
+				{/*
+				  Deliberately not gated on `selectedDice.length`. The popup is centred on
+				  its own height, so a summary that appears with the first die re-centres
+				  the whole dialog out from under the finger that just tapped. Rendering it
+				  empty — placeholder, sum of 0, Clear All disabled — keeps the height fixed
+				  from the first tap to the fifth. The chip row's min-height is what holds
+				  it up while there are no chips in it.
+				*/}
+				<div className="space-y-3 border-t pt-4">
+					<div className="flex items-center justify-between">
+						<span className="text-sm font-medium text-muted-foreground">
+							{t.scoreModal.selectedDice}
+						</span>
+						<Button
+							variant="destructive"
+							size="sm"
+							disabled={selectedDice.length === 0}
+							onClick={() => setSelectedDice([])}
+						>
+							{t.scoreModal.clearAll}
+						</Button>
+					</div>
 
-						<div className="flex flex-wrap items-center gap-2">
-							{selectedDice.map((die, index) => (
+					<div className="flex min-h-7 flex-wrap items-center gap-2">
+						{selectedDice.length === 0 ? (
+							<span className="text-sm text-muted-foreground">{t.scoreModal.noDiceSelected}</span>
+						) : (
+							selectedDice.map((die, index) => (
 								<div key={index} className="relative">
 									<DiceFace value={die} size={28} />
 									<button
@@ -417,19 +432,19 @@ export function ScorePicker({ category, current, onScore, onErase, onClose }: Sc
 										×
 									</button>
 								</div>
-							))}
-						</div>
-
-						<div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 p-3">
-							<span className="font-medium">{t.scoreModal.totalScore}</span>
-							<span className="text-xl font-bold tabular-nums">{chanceScore(selectedDice)}</span>
-						</div>
-
-						<p className="text-center text-sm text-muted-foreground">
-							{t.scoreModal.moreDiceToSelect(MAX_CHANCE_DICE - selectedDice.length)}
-						</p>
+							))
+						)}
 					</div>
-				)}
+
+					<div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 p-3">
+						<span className="font-medium">{t.scoreModal.totalScore}</span>
+						<span className="text-xl font-bold tabular-nums">{chanceScore(selectedDice)}</span>
+					</div>
+
+					<p className="text-center text-sm text-muted-foreground">
+						{t.scoreModal.moreDiceToSelect(MAX_CHANCE_DICE - selectedDice.length)}
+					</p>
+				</div>
 			</div>
 		);
 	}

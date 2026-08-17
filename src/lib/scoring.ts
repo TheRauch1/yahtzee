@@ -2,22 +2,16 @@ import type { Player, ScoringCategory } from './types';
 import { LOWER_CATEGORIES, UPPER_CATEGORIES } from './types';
 
 /**
- * House rules.
+ * Scoring follows Yatzy, not Yahtzee.
  *
- * This scoreboard deliberately does NOT follow either standard Yahtzee or standard
- * Yatzy. The values below are how we actually play — they are intentional, they are
- * covered by tests, and they should not be "corrected" to match a rulebook.
- *
- *  - Three of a kind scores value * 3 + 3 (the two remaining dice count as a flat 3).
- *  - Four of a kind scores value * 4 + 1 (the remaining die counts as a flat 1).
+ *  - Pair and Two Pairs are categories here; Yahtzee has neither.
+ *  - Three and four of a kind score the matching dice only (value * 3, value * 4),
+ *    where Yahtzee would score the sum of all five dice.
  *
  * The upper bonus is the standard 35 points at 63+.
  */
 export const UPPER_BONUS_THRESHOLD = 63;
 export const UPPER_BONUS_POINTS = 35;
-
-const THREE_OF_A_KIND_REMAINDER = 3;
-const FOUR_OF_A_KIND_REMAINDER = 1;
 
 export const SMALL_STRAIGHT_POINTS = 30;
 export const LARGE_STRAIGHT_POINTS = 40;
@@ -50,14 +44,14 @@ export function twoPairsScore(first: number, second: number): number {
 	return first * 2 + second * 2;
 }
 
-/** House rule: the two non-matching dice always count as a flat 3. */
+/** Sum of the three matching dice. */
 export function threeOfAKindScore(value: number): number {
-	return value * 3 + THREE_OF_A_KIND_REMAINDER;
+	return value * 3;
 }
 
-/** House rule: the remaining die always counts as a flat 1. */
+/** Sum of the four matching dice. */
 export function fourOfAKindScore(value: number): number {
-	return value * 4 + FOUR_OF_A_KIND_REMAINDER;
+	return value * 4;
 }
 
 export function fullHouseScore(threeOfAKind: number, pair: number): number {

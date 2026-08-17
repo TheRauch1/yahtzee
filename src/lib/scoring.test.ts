@@ -51,6 +51,18 @@ describe('lower categories', () => {
 		expect(twoPairsScore(1, 1)).toBe(4);
 	});
 
+	it('scores three of a kind as three times the value', () => {
+		expect(threeOfAKindScore(5)).toBe(15);
+		expect(threeOfAKindScore(1)).toBe(3);
+		expect(threeOfAKindScore(6)).toBe(18);
+	});
+
+	it('scores four of a kind as four times the value', () => {
+		expect(fourOfAKindScore(5)).toBe(20);
+		expect(fourOfAKindScore(1)).toBe(4);
+		expect(fourOfAKindScore(6)).toBe(24);
+	});
+
 	it('scores a full house as three of one plus two of the other', () => {
 		expect(fullHouseScore(5, 2)).toBe(19);
 		expect(fullHouseScore(1, 6)).toBe(15);
@@ -63,23 +75,7 @@ describe('lower categories', () => {
 	});
 });
 
-/**
- * These are deliberate house rules, not standard Yahtzee or Yatzy.
- * If one of these assertions fails, the scoring was changed by accident.
- */
-describe('house rules', () => {
-	it('scores three of a kind as value * 3 + 3', () => {
-		expect(threeOfAKindScore(5)).toBe(18);
-		expect(threeOfAKindScore(1)).toBe(6);
-		expect(threeOfAKindScore(6)).toBe(21);
-	});
-
-	it('scores four of a kind as value * 4 + 1', () => {
-		expect(fourOfAKindScore(5)).toBe(21);
-		expect(fourOfAKindScore(1)).toBe(5);
-		expect(fourOfAKindScore(6)).toBe(25);
-	});
-
+describe('upper bonus', () => {
 	it('awards the upper bonus at the standard 63', () => {
 		expect(UPPER_BONUS_THRESHOLD).toBe(63);
 		expect(UPPER_BONUS_POINTS).toBe(35);

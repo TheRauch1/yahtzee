@@ -18,23 +18,6 @@ There is no dice rolling and no computer opponent — it is the paper score shee
 - Installable PWA that works with no network at all
 - Confirmation prompts on the two destructive actions — Reset and removing a player
 
-## House rules
-
-This scoreboard deliberately does **not** follow standard Yahtzee or standard Yatzy. It follows
-the way we play. These are intentional, and they are pinned by tests in `src/lib/scoring.test.ts`
-so they cannot drift:
-
-| Rule             | Here            | Standard Yahtzee  |
-| ---------------- | --------------- | ----------------- |
-| Three of a kind  | `value × 3 + 3` | Sum of all 5 dice |
-| Four of a kind   | `value × 4 + 1` | Sum of all 5 dice |
-| Pair / Two Pairs | Included        | Not a category    |
-
-The upper bonus follows the standard rules: 35 points at 63+.
-
-For three and four of a kind, the non-matching dice count as a flat amount (3 and 1
-respectively) rather than being entered individually — that keeps scoring to a single tap.
-
 ## Quick start
 
 Requires Node.js 22+ — `package.json` enforces it (`.npmrc` sets `engine-strict=true`, so an
@@ -168,7 +151,6 @@ needs its Node version set alongside the output directory, or `npm ci` fails the
 ## Contributing notes
 
 - `src/lib/scoring.ts` is the only place scoring maths should live. Keep it pure and add a test.
-- If you change the house rules, update `scoring.test.ts` and the table above in the same commit.
 - Files under `src/components/ui/` are shadcn/Base UI primitives — treat them as generated code,
   not hand-tuned application logic.
 - To add a primitive, run `npx shadcn@latest add <name>`. The CLI is deliberately **not** a
