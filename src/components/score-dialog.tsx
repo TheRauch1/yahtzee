@@ -20,46 +20,63 @@ interface ScoreDialogProps {
 interface Shown {
 	selection: ScoreDialogSelection;
 	current: number | null;
+	// Identifies one open of the dialog, which the selection cannot: reopening
+	// the same cell is a new open of an identical selection. See the key below.
+	openId: number;
 }
 
 export function ScoreDialog({ selected, current, onScore, onErase, onClose }: ScoreDialogProps) {
+	const open = selected !== null;
+
 	// Base UI keeps the popup mounted while it animates out, but `selected` is
 	// already null by that point. Rendering the picker straight off it emptied the
 	// dialog the instant it started closing, so what animated away was a blank
 	// box. Mirror the selection here and let the copy outlive it.
-	//
-	// Assigning during render is deliberate — it is React's "adjust state when a
-	// prop changes" case, and the condition makes it idempotent. Every close path
-	// has to be covered, and only some of them go through onOpenChange: scoring,
-	// erasing and Cancel all null `selected` directly.
 	const [shown, setShown] = useState<Shown | null>(null);
+	// Because the copy outlives `selected`, "is the dialog open" cannot be read
+	// off `shown` — during an exit there is a copy but no selection. Tracking the
+	// prop is what tells a reopen apart from a re-render of an open dialog.
+	const [wasOpen, setWasOpen] = useState(false);
 
-	if (
-		selected !== null &&
-		(shown === null || shown.selection !== selected || shown.current !== current)
-	) {
-		setShown({ selection: selected, current });
+	// Assigning during render is deliberate — it is React's "adjust state when a
+	// prop changes" case, and each branch is idempotent. Every close path has to
+	// be covered, and only some of them go through onOpenChange: scoring, erasing
+	// and Cancel all null `selected` directly.
+	if (open !== wasOpen) setWasOpen(open);
+
+	if (selected !== null) {
+		if (shown !== null && wasOpen && shown.selection === selected) {
+			// Still the same open of the same cell, so only the score under it can
+			// have moved. Keep the picker and whatever has been picked in it.
+			if (shown.current !== current) setShown({ ...shown, current });
+		} else {
+			// A new open. That includes reopening the cell that is still animating
+			// out: `selected` can even be the identical object, and the popup is
+			// still mounted, so without a fresh id React would hand the reopen the
+			// picker that is on its way out — half-made picks and all.
+			setShown({ selection: selected, current, openId: (shown?.openId ?? 0) + 1 });
+		}
 	}
 
 	return (
 		<Dialog
-			open={selected !== null}
-			onOpenChange={(open) => !open && onClose()}
+			open={open}
+			onOpenChange={(next) => !next && onClose()}
 			// Belt and braces. Base UI tears down the popup subtree once it has
 			// finished animating out, so the picker already unmounts and its local
 			// pick state already resets without this. Releasing the copy keeps that
 			// true if the popup is ever kept mounted instead.
-			onOpenChangeComplete={(open) => {
-				if (!open) setShown(null);
+			onOpenChangeComplete={(next) => {
+				if (!next) setShown(null);
 			}}
 		>
 			<DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
 				{shown && (
 					<ScorePicker
-						// Player + category keys the whole picker, so its local pick
-						// state resets the same way the old native <dialog> did on
-						// unmount, instead of surviving across opens.
-						key={`${shown.selection.playerId}:${shown.selection.category}`}
+						// One picker per open — not per cell — so its local pick state
+						// resets the same way the old native <dialog> did on unmount,
+						// instead of surviving across opens.
+						key={shown.openId}
 						category={shown.selection.category}
 						current={shown.current}
 						onScore={onScore}
